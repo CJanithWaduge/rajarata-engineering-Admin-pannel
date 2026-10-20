@@ -3,7 +3,7 @@
  *
  * Usage (from the admin-panel repo root):
  *
- *   node scripts/seed-settings.mjs --email you@example.com
+ *   node scripts/seed-settings.mjs --email <admin-email>
  *
  * Prompts for the admin password (never echoed, never stored), signs in with
  * the Firebase Auth REST API, then writes the document with the Firestore REST

@@ -101,7 +101,6 @@ export function ForgotPasswordDialog({ onClose }: ForgotPasswordDialogProps) {
               label="Email"
               type="email"
               autoComplete="username"
-              placeholder="admin@example.com"
               error={errors.email?.message}
               disabled={isSubmitting}
               autoFocus

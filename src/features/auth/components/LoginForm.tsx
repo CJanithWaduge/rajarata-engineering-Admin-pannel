@@ -59,7 +59,6 @@ export function LoginForm() {
         label="Email"
         type="email"
         autoComplete="username"
-        placeholder="admin@example.com"
         error={errors.email?.message}
         disabled={isSubmitting}
         tone="dark"

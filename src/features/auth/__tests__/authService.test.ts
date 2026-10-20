@@ -7,7 +7,9 @@ const authMocks = vi.hoisted(() => ({
 }))
 
 const firestoreMocks = vi.hoisted(() => ({
-  doc: vi.fn(() => ({ path: 'admins/uid-1' })),
+  doc: vi.fn((_db: unknown, collection: string, id: string) => ({
+    path: `${collection}/${id}`,
+  })),
   getDoc: vi.fn(),
 }))
 
@@ -118,6 +120,33 @@ describe('authService', () => {
     firestoreMocks.getDoc.mockResolvedValue({ exists: () => false })
 
     await expect(fetchAdminProfile('uid-1')).resolves.toBeNull()
+  })
+
+  it('falls back to an email-keyed admin record', async () => {
+    firestoreMocks.getDoc
+      .mockResolvedValueOnce({ exists: () => false })
+      .mockResolvedValueOnce(
+        adminSnapshot({ email: 'admin@rajarata.test', role: 'owner', active: true }),
+      )
+
+    const profile = await fetchAdminProfile('uid-1', 'Admin@Rajarata.test')
+
+    expect(firestoreMocks.getDoc).toHaveBeenNthCalledWith(1, { path: 'admins/uid-1' })
+    expect(firestoreMocks.getDoc).toHaveBeenNthCalledWith(2, {
+      path: 'admins/admin@rajarata.test',
+    })
+    expect(profile).toMatchObject({ uid: 'uid-1', role: 'owner', active: true })
+  })
+
+  it('rejects an email-keyed admin record that is inactive', async () => {
+    firestoreMocks.getDoc
+      .mockResolvedValueOnce({ exists: () => false })
+      .mockResolvedValueOnce(adminSnapshot({ active: false, role: 'admin' }))
+
+    await expect(signInAdmin('admin@rajarata.test', 'secret')).rejects.toMatchObject({
+      code: 'not-admin',
+    })
+    expect(authMocks.signOut).toHaveBeenCalledTimes(1)
   })
 })
 

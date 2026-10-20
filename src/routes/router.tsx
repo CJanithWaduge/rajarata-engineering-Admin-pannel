@@ -3,6 +3,7 @@ import { AdminLayout } from '../components/layout/AdminLayout'
 import { GuestOnly } from '../features/auth/guards/GuestOnly'
 import { RequireAdmin } from '../features/auth/guards/RequireAdmin'
 import { LoginPage } from '../features/auth/pages/LoginPage'
+import { SettingsPage } from '../features/settings/pages/SettingsPage'
 import { DashboardPage } from '../pages/DashboardPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { ROUTES } from './paths'
@@ -17,7 +18,10 @@ export const router = createBrowserRouter([
     children: [
       {
         element: <AdminLayout />,
-        children: [{ path: ROUTES.dashboard, element: <DashboardPage /> }],
+        children: [
+          { path: ROUTES.dashboard, element: <DashboardPage /> },
+          { path: ROUTES.settings, element: <SettingsPage /> },
+        ],
       },
     ],
   },

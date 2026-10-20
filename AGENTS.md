@@ -35,11 +35,15 @@
 ## Firebase and auth conventions
 
 - `src/lib/firebase.ts` is the only module that calls `initializeApp`, `getAuth`, or `getFirestore`; it exports `app`, `auth`, `db`. Storage stays uninitialized until Phase 2.
-- Login is email/password only. `signInAdmin` in `src/features/auth/authService.ts` performs the credential sign-in **and** verifies `admins/{uid}` exists with `active !== false`; otherwise it signs out and throws a `not-admin` error.
-- Any authenticated Firebase user is **not** automatically an admin. Admin docs are provisioned manually in Firebase Console; the client never writes `admins/*`.
+- Login is email/password only. `signInAdmin` in `src/features/auth/authService.ts` performs the credential sign-in **and** verifies the account is provisioned as an admin; otherwise it signs out and throws a `not-admin` error.
+- An admin record can be keyed two ways, and both are supported deliberately:
+  - `admins/{uid}` — canonical, revocation-friendly (delete/deactivate the doc).
+  - `admins/{email}` (lowercase) — console-friendly allowlist, so provisioning is "create the Auth user, then add a document whose ID is that email".
+  The client checks `{uid}` first, then the lowercased email. `firestore.rules` allows a signed-in user to read either record only if it matches their own uid or email.
+- Any authenticated Firebase user is **not** automatically an admin. Admin docs are provisioned manually in Firebase Console (or the Admin SDK); the client never writes `admins/*`.
 - Auth state lives in `AuthProvider` (single `onAuthStateChanged` subscription) and is consumed via `useAuth()`. Do not call `firebase/auth` from components.
 - `RequireAdmin` and `GuestOnly` are route-level guards. Guarding is UX only — `firestore.rules` is the security boundary.
-- Firestore rules are default-deny: only `admins/{uid}` (self-read) is allowed today. Every new content path needs an explicit rule; otherwise the feature is not done.
+- Firestore rules are default-deny: `admins/{uid|email}` (self-read) and `site/settings` (public read, admin write) are the only allowed paths today. Every new content path needs an explicit rule; otherwise the feature is not done.
 - Media flow (Phase 2): upload to Storage → `getDownloadURL()` → save the URL in Firestore; delete replaced objects.
 - Save feedback must be immediate: disable the submit control while writing and show success/error feedback after the write settles.
 
@@ -64,7 +68,7 @@
 - `src/features/auth/` — `types.ts`, `errors.ts`, `schema.ts`, `authService.ts`, `context.ts`, `AuthProvider.tsx`, `useAuth.ts`, `components/`, `pages/`, `guards/`.
 - `src/components/ui/` — domain-agnostic form/UI primitives reused by all later CRUD forms (`Button`, `TextField`, `PasswordField`, `Alert`, `FullPageSpinner`).
 - `src/components/brand/BrandLogo.tsx` — brand mark mirrored from the public site.
-- `src/components/layout/AdminLayout.tsx` — protected shell with sign-out.
+- `src/components/layout/AdminLayout.tsx` — protected shell: fixed sidebar navigation with a persisted collapse-to-icon-rail state (`localStorage` key `rajarata-admin.sidebar-collapsed`), an off-canvas drawer below `lg`, and sign-out in the sidebar footer. Icons live in `src/components/layout/icons.tsx` (inline SVG, no icon dependency).
 - `src/routes/` — `paths.ts`, `redirect.ts` (same-origin redirect validation), `router.tsx`.
 - `src/pages/` — dashboard placeholder and public 404.
 - Tests live in `__tests__/` next to the code they cover (e.g. `src/features/auth/__tests__/`).

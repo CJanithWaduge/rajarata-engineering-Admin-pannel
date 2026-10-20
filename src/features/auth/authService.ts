@@ -45,13 +45,25 @@ export async function fetchAdminProfile(
   uid: string,
   authEmail: string | null = null,
 ): Promise<AdminProfile | null> {
-  const snapshot = await getDoc(doc(db, ADMINS_COLLECTION, uid))
-
-  if (!snapshot.exists()) {
-    return null
+  // Primary record: admins/{uid}. This is the canonical form and supports
+  // revocation without touching the Auth account.
+  const byUid = await getDoc(doc(db, ADMINS_COLLECTION, uid))
+  if (byUid.exists()) {
+    return toAdminProfile(uid, authEmail, byUid.data())
   }
 
-  return toAdminProfile(uid, authEmail, snapshot.data())
+  // Fallback: admins/{email}. Lets an owner provision an admin straight from
+  // the Firebase Console by creating a document whose ID is the account email,
+  // without having to copy the uid. Lowercased to match the rules check.
+  const email = authEmail?.trim().toLowerCase()
+  if (!email) return null
+
+  const byEmail = await getDoc(doc(db, ADMINS_COLLECTION, email))
+  if (byEmail.exists()) {
+    return toAdminProfile(uid, authEmail, byEmail.data())
+  }
+
+  return null
 }
 
 async function endSessionSafely(): Promise<void> {
