@@ -2,6 +2,15 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Shared admin check. Reused by every content path added in Phase 2+.
+    // Being authenticated is not enough: the user must have an active
+    // admins/{uid} record, which is provisioned manually.
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active != false;
+    }
+
     // Admin provisioning is manual (Firebase Console / Admin SDK).
     // The client may only read its own admin record, never write it.
     match /admins/{uid} {
@@ -9,7 +18,16 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Content collections are added explicitly in Phase 2.
+    // Site-wide settings singleton: contact details, links, business identity.
+    // Public read is required and deliberate — the marketing site is a static
+    // build with no server, so it reads this document from the browser.
+    // Never store anything here that is not already published on the site.
+    match /site/settings {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Any other content collection is added explicitly in a later phase.
     match /{document=**} {
       allow read, write: if false;
     }
