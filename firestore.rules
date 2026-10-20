@@ -1,0 +1,17 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Admin provisioning is manual (Firebase Console / Admin SDK).
+    // The client may only read its own admin record, never write it.
+    match /admins/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // Content collections are added explicitly in Phase 2.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
