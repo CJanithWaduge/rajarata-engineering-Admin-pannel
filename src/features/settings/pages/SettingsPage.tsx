@@ -22,6 +22,7 @@ export function SettingsPage() {
     email: settings.email,
     address: settings.address,
     facebookUrl: settings.facebookUrl,
+    facebookLabel: settings.facebookLabel,
     location: settings.location,
   }
 

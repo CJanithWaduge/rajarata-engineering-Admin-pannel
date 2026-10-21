@@ -35,8 +35,20 @@ const addressSchema = z
 const facebookUrlSchema = z
   .string()
   .transform((value) => value.trim())
-  .refine((value) => value === '' || /^https:\/\/(www\.)?facebook\.com\/\S+$/.test(value), {
-    message: 'Enter a full https:// Facebook page URL, or leave it empty.',
+  .refine(
+    (value) =>
+      value === '' ||
+      /^https:\/\/([a-z0-9-]+\.)*(facebook\.com|fb\.com|fb\.me)\/\S+$/i.test(value),
+    {
+      message: 'Enter a full https:// Facebook page URL, or leave it empty.',
+    },
+  )
+
+const facebookLabelSchema = z
+  .string()
+  .transform((value) => value.trim())
+  .refine((value) => value.length <= 40, {
+    message: 'Link text must be 40 characters or fewer.',
   })
 
 const locationSchema = z
@@ -50,6 +62,7 @@ export const settingsSchema = z.object({
   email: emailSchema,
   address: addressSchema,
   facebookUrl: facebookUrlSchema,
+  facebookLabel: facebookLabelSchema,
   location: locationSchema,
 })
 
@@ -66,6 +79,7 @@ export function normaliseSettings(input: SettingsFormValues): SettingsFormValues
     email: input.email.trim(),
     address: input.address.replace(/\r\n/g, '\n'),
     facebookUrl: input.facebookUrl.trim(),
+    facebookLabel: input.facebookLabel.trim(),
     location: input.location.trim(),
   }
 }

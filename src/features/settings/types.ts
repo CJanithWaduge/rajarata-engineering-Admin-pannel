@@ -4,6 +4,7 @@ export type SiteSettings = {
   email: string
   address: string
   facebookUrl: string
+  facebookLabel: string
   location: string
   updatedAt: Date | null
   updatedBy: string | null
@@ -15,6 +16,7 @@ export type SettingsFormValues = {
   email: string
   address: string
   facebookUrl: string
+  facebookLabel: string
   location: string
 }
 

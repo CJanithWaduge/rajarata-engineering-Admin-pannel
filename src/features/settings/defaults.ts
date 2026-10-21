@@ -6,6 +6,7 @@ export const EMPTY_SETTINGS: SiteSettings = {
   email: '',
   address: '',
   facebookUrl: '',
+  facebookLabel: '',
   location: '',
   updatedAt: null,
   updatedBy: null,
@@ -68,6 +69,13 @@ export const SETTINGS_FIELDS: SettingsFieldMeta[] = [
     type: 'text',
     group: 'links',
   },
+  {
+    key: 'facebookLabel',
+    label: 'Facebook link text',
+    hint: 'Optional. Shown in the footer instead of the page URL.',
+    type: 'text',
+    group: 'links',
+  },
 ]
 
 export const EMPTY_FORM_VALUES: SettingsFormValues = {
@@ -76,5 +84,6 @@ export const EMPTY_FORM_VALUES: SettingsFormValues = {
   email: '',
   address: '',
   facebookUrl: '',
+  facebookLabel: '',
   location: '',
 }

@@ -14,7 +14,7 @@ import type { SettingsFormValues, SiteSettings } from './types'
 const SETTINGS_REF = doc(db, 'site', 'settings')
 
 function toSiteSettings(data: Record<string, unknown> | undefined): SiteSettings {
-  const read = (key: 'phone' | 'whatsapp' | 'email' | 'address' | 'facebookUrl' | 'location'): string => {
+  const read = (key: 'phone' | 'whatsapp' | 'email' | 'address' | 'facebookUrl' | 'facebookLabel' | 'location'): string => {
     const value = data?.[key]
     if (typeof value === 'string') return value
     if (value instanceof Timestamp) return ''
@@ -30,6 +30,7 @@ function toSiteSettings(data: Record<string, unknown> | undefined): SiteSettings
     email: read('email'),
     address: read('address'),
     facebookUrl: read('facebookUrl'),
+    facebookLabel: read('facebookLabel'),
     location: read('location'),
     updatedAt: updatedAtValue instanceof Timestamp ? updatedAtValue.toDate() : null,
     updatedBy: typeof updatedByValue === 'string' ? updatedByValue : null,
