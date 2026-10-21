@@ -9,6 +9,7 @@ import {
   ChevronRightIcon,
   CloseIcon,
   DashboardIcon,
+  HomeIcon,
   LogoutIcon,
   MenuIcon,
   SettingsIcon,
@@ -18,6 +19,7 @@ const SIDEBAR_STORAGE_KEY = 'rajarata-admin.sidebar-collapsed'
 
 const NAV_ITEMS = [
   { to: ROUTES.dashboard, label: 'Dashboard', icon: DashboardIcon, end: true },
+  { to: ROUTES.home, label: 'Home Page', icon: HomeIcon, end: false },
   { to: ROUTES.settings, label: 'Site Settings', icon: SettingsIcon, end: false },
 ] as const
 

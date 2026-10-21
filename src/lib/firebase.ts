@@ -1,6 +1,7 @@
 import { getApp, getApps, initializeApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
+import { getStorage } from 'firebase/storage'
 import { env } from './env'
 
 const firebaseConfig = {
@@ -20,3 +21,5 @@ export const auth = getAuth(app)
 // Second argument selects the Firestore database id (`(default)` unless
 // `VITE_FIREBASE_DATABASE_ID` says otherwise). See src/lib/env.ts.
 export const db = getFirestore(app, env.VITE_FIREBASE_DATABASE_ID)
+
+export const storage = getStorage(app)

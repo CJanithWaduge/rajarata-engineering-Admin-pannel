@@ -46,6 +46,24 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Home page singleton: hero media plus three featured project cards.
+    // The public site hydrates the Home page from this document, so read is
+    // public by design. Shape checks are a backstop; the admin form validates
+    // every value and every image before it writes.
+    function isValidHomeContent() {
+      return request.resource.data.hero is map
+        && request.resource.data.featuredProjects is list
+        && request.resource.data.featuredProjects.size() == 3
+        && request.resource.data.updatedAt is timestamp
+        && request.resource.data.updatedBy is string;
+    }
+
+    match /site/home {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidHomeContent();
+      allow delete: if isAdmin();
+    }
+
     // Any other content collection is added explicitly in a later phase.
     match /{document=**} {
       allow read, write: if false;

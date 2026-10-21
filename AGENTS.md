@@ -3,14 +3,14 @@
 ## Current state
 
 - Vite 8 + React 19 + TypeScript 7 + Tailwind 4 admin panel, scaffolded from `create-vite` `react-ts` and linted with **oxlint** (not ESLint).
-- Phase 1 (login, admin authorization, route guards) is implemented. Phase 2 (content CRUD, Storage uploads) is **not** built yet; `/dashboard` is a placeholder.
+- Phase 1 (login, admin authorization, route guards), Phase 2 (`site/settings`), and Phase 3 (`site/home` + Storage uploads) are implemented. `/dashboard` is still a placeholder.
 - `main` has no commits yet. Verify work against files, not git history.
-- The Firestore content schema (hero, contact, services, gallery) has not been decided. Do not invent collection names or field shapes; `admins/{uid}` is the only agreed collection.
+- The content schema is locked for the two implemented singletons: `site/settings` and `site/home`. `admins/{uid|email}` is the admin allowlist. Do not invent collection names or field shapes for later phases.
 
 ## Product and stack
 
 - React + Vite + Tailwind admin panel for the Rajarata Engineering public website.
-- Firebase Authentication (admin login), Firestore (all dynamic site content), Firebase Storage (media, Phase 2).
+- Firebase Authentication (admin login), Firestore (all dynamic site content), Firebase Storage (Home page media).
 - This repo is the admin/CRUD surface only. The public website is separate and reads the same Firestore data.
 
 ## UI theme (mirrors the public site)
@@ -34,7 +34,7 @@
 
 ## Firebase and auth conventions
 
-- `src/lib/firebase.ts` is the only module that calls `initializeApp`, `getAuth`, or `getFirestore`; it exports `app`, `auth`, `db`. Storage stays uninitialized until Phase 2.
+- `src/lib/firebase.ts` is the only module that calls `initializeApp`, `getAuth`, `getFirestore`, or `getStorage`; it exports `app`, `auth`, `db`, `storage`. Storage uploads live behind `src/features/home/storageService.ts`; do not call `firebase/storage` from components.
 - Login is email/password only. `signInAdmin` in `src/features/auth/authService.ts` performs the credential sign-in **and** verifies the account is provisioned as an admin; otherwise it signs out and throws a `not-admin` error.
 - An admin record can be keyed two ways, and both are supported deliberately:
   - `admins/{uid}` — canonical, revocation-friendly (delete/deactivate the doc).
@@ -43,8 +43,8 @@
 - Any authenticated Firebase user is **not** automatically an admin. Admin docs are provisioned manually in Firebase Console (or the Admin SDK); the client never writes `admins/*`.
 - Auth state lives in `AuthProvider` (single `onAuthStateChanged` subscription) and is consumed via `useAuth()`. Do not call `firebase/auth` from components.
 - `RequireAdmin` and `GuestOnly` are route-level guards. Guarding is UX only — `firestore.rules` is the security boundary.
-- Firestore rules are default-deny: `admins/{uid|email}` (self-read) and `site/settings` (public read, admin write) are the only allowed paths today. Every new content path needs an explicit rule; otherwise the feature is not done.
-- Media flow (Phase 2): upload to Storage → `getDownloadURL()` → save the URL in Firestore; delete replaced objects.
+- Firestore rules are default-deny: `admins/{uid|email}` (self-read), `site/settings` (public read, admin write), and `site/home` (public read, admin write) are the allowed paths today. `storage.rules` allows public reads of `home/hero/*` and `home/projects/*`, with admin-only writes capped at 5 MB and 3 MB respectively. Every new content path needs an explicit rule; otherwise the feature is not done.
+- Media flow (implemented for Home): validate in the browser → upload to Storage → `getDownloadURL()` → save the URL/path/metadata in Firestore → delete replaced objects. Roll back new uploads if the document write fails.
 - Save feedback must be immediate: disable the submit control while writing and show success/error feedback after the write settles.
 
 ## Firebase project wiring (first-run checklist)
@@ -66,7 +66,7 @@
 
 - `src/lib/` — `env.ts` (validates the required `VITE_FIREBASE_*` keys, fails fast, defaults the optional `VITE_FIREBASE_DATABASE_ID`) and `firebase.ts`.
 - `src/features/auth/` — `types.ts`, `errors.ts`, `schema.ts`, `authService.ts`, `context.ts`, `AuthProvider.tsx`, `useAuth.ts`, `components/`, `pages/`, `guards/`.
-- `src/components/ui/` — domain-agnostic form/UI primitives reused by all later CRUD forms (`Button`, `TextField`, `PasswordField`, `Alert`, `FullPageSpinner`).
+- `src/components/ui/` — domain-agnostic form/UI primitives reused by all later CRUD forms (`Button`, `TextField`, `PasswordField`, `Alert`, `Toast`, `FullPageSpinner`).
 - `src/components/brand/BrandLogo.tsx` — brand mark mirrored from the public site.
 - `src/components/layout/AdminLayout.tsx` — protected shell: fixed sidebar navigation with a persisted collapse-to-icon-rail state (`localStorage` key `rajarata-admin.sidebar-collapsed`), an off-canvas drawer below `lg`, and sign-out in the sidebar footer. Icons live in `src/components/layout/icons.tsx` (inline SVG, no icon dependency).
 - `src/routes/` — `paths.ts`, `redirect.ts` (same-origin redirect validation), `router.tsx`.
@@ -84,21 +84,21 @@ Run from the repo root with npm (a `package-lock.json` exists; do not switch pac
 - `npm run test` — Vitest watch mode.
 - `npm run test:run` — single CI-style run.
 - Single file: `npm run test:run -- src/features/auth/__tests__/authService.test.ts`.
-- `npm run deploy:rules` — deploy `firestore.rules` with `npx firebase-tools` (project pinned in `.firebaserc`). Requires `npx firebase-tools login` once.
+- `npm run deploy:rules` — deploy `firestore.rules` and `storage.rules` with `npx firebase-tools` (project pinned in `.firebaserc`). Requires `npx firebase-tools login` once, the named Firestore database to exist, and Firebase Storage to be provisioned.
 
 ## Testing quirks
 
 - Vitest 5 + jsdom. Config lives in the `test` block of `vite.config.ts`; setup is `src/test/setup.ts` (jest-dom + RTL cleanup).
 - Globals are **off**: import `describe`, `it`, `expect`, `vi` from `vitest` explicitly.
 - Firebase is never hit in tests. Mock the service boundary (`../authService`) or `firebase/*` modules with `vi.mock` + `vi.hoisted`; stub env with `vi.stubEnv` + `vi.resetModules` for `src/lib/env.ts`.
-- No emulator or test credentials are set up. Do not add tests that require a live Firebase project; the four manual cases in `IMPLIMENTAION.md` cover real-network behavior.
+- No emulator or test credentials are set up. Do not add tests that require a live Firebase project; the manual cases in `IMPLIMENTAION.md` cover real-network behavior, including HOME-022 (public hydration) and HOME-023 (Storage upload on Spark).
 
 ## Toolchain quirks
 
 - `tsconfig.app.json` has `strict`, `verbatimModuleSyntax` (use `import type`), and `erasableSyntaxOnly` (no enums, namespaces, or constructor parameter properties).
 - Tailwind 4 uses the `@tailwindcss/vite` plugin and `@import "tailwindcss"` in `src/index.css`; there is no `tailwind.config.js` or `postcss.config.js`. Do not add them unless you migrate deliberately.
 - The production build warns that the Firebase bundle exceeds 500 kB. It is expected; address it with route/feature code-splitting, not by raising the warning limit.
-- `firestore.rules` is deployed by `npm run deploy:rules`; the project is pinned in `.firebaserc`. Deploying requires the Firestore database to exist first.
+- `firestore.rules` and `storage.rules` are deployed by `npm run deploy:rules`; the project is pinned in `.firebaserc`. Deploying requires the Firestore database and a Storage bucket to exist first. The Storage rules use the cross-service path `/databases/default/documents/admins/...`; if `VITE_FIREBASE_DATABASE_ID` is switched to `(default)`, that path must change with it.
 
 ## Before finishing a change
 

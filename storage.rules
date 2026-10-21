@@ -1,0 +1,44 @@
+rules_version = '2';
+
+// Media rules for the admin panel. Public reads are required because the
+// marketing site loads these images directly from Storage. Writes are limited
+// to active admins, using the same two admin-record shapes as firestore.rules.
+//
+// This project uses the NAMED Firestore database `default`, so the
+// cross-service path is /databases/default/documents/..., not (default).
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isActiveAdmin(id) {
+      return firestore.exists(/databases/default/documents/admins/$(id))
+        && firestore.get(/databases/default/documents/admins/$(id)).data.active != false;
+    }
+
+    function isAdmin() {
+      return request.auth != null
+        && (isActiveAdmin(request.auth.uid)
+          || (request.auth.token.email is string
+            && isActiveAdmin(request.auth.token.email.lower())));
+    }
+
+    match /home/hero/{fileName} {
+      allow read: if true;
+      allow create, update: if isAdmin()
+        && request.resource.size <= 5 * 1024 * 1024
+        && request.resource.contentType in ['image/jpeg', 'image/png', 'image/webp'];
+      allow delete: if isAdmin();
+    }
+
+    match /home/projects/{slot}/{fileName} {
+      allow read: if true;
+      allow create, update: if slot in ['1', '2', '3']
+        && isAdmin()
+        && request.resource.size <= 3 * 1024 * 1024
+        && request.resource.contentType in ['image/jpeg', 'image/png', 'image/webp'];
+      allow delete: if isAdmin();
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

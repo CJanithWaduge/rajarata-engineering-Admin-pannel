@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { SettingsFormValues } from '../types'
@@ -13,7 +13,6 @@ type Props = {
   defaultValues: SettingsFormValues
   onSubmit: (values: SettingsFormValues) => void
   isSaving: boolean
-  successMessage?: string | null
   errorMessage?: string | null
 }
 
@@ -21,7 +20,6 @@ export function SettingsForm({
   defaultValues,
   onSubmit,
   isSaving,
-  successMessage,
   errorMessage,
 }: Props) {
   const {
@@ -35,19 +33,16 @@ export function SettingsForm({
   })
 
   const prevDefault = useRef<SettingsFormValues>(defaultValues)
-  const [isSubmitted, setIsSubmitted] = useState(false)
 
   useEffect(() => {
     if (JSON.stringify(prevDefault.current) !== JSON.stringify(defaultValues)) {
       prevDefault.current = defaultValues
       reset(defaultValues)
-      setIsSubmitted(false)
     }
   }, [defaultValues, reset])
 
   const onFormSubmit = (values: SettingsFormValues) => {
     onSubmit(values)
-    setIsSubmitted(true)
   }
 
   return (
@@ -55,11 +50,6 @@ export function SettingsForm({
       {errorMessage ? (
         <Alert variant="error">
           {errorMessage}
-        </Alert>
-      ) : null}
-      {isSubmitted && successMessage && !errorMessage ? (
-        <Alert variant="success">
-          {successMessage}
         </Alert>
       ) : null}
 

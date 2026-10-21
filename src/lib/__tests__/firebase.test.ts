@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   getApp: vi.fn(() => ({ name: 'existing-app' })),
   getAuth: vi.fn(() => ({ name: 'auth' })),
   getFirestore: vi.fn(() => ({ name: 'db' })),
+  getStorage: vi.fn(() => ({ name: 'storage' })),
 }))
 
 vi.mock('firebase/app', () => ({
@@ -20,6 +21,10 @@ vi.mock('firebase/auth', () => ({
 
 vi.mock('firebase/firestore', () => ({
   getFirestore: mocks.getFirestore,
+}))
+
+vi.mock('firebase/storage', () => ({
+  getStorage: mocks.getStorage,
 }))
 
 const validEnv = {
@@ -61,8 +66,10 @@ describe('firebase initialization', () => {
     })
     expect(mocks.getAuth).toHaveBeenCalledWith({ name: 'app' })
     expect(mocks.getFirestore).toHaveBeenCalledWith({ name: 'app' }, 'default')
+    expect(mocks.getStorage).toHaveBeenCalledWith({ name: 'app' })
     expect(module.auth).toEqual({ name: 'auth' })
     expect(module.db).toEqual({ name: 'db' })
+    expect(module.storage).toEqual({ name: 'storage' })
   })
 
   it('reuses an existing app instead of initializing a second time', async () => {

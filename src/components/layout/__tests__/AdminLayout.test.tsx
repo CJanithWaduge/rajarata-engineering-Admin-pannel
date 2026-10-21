@@ -28,6 +28,7 @@ function renderLayout() {
       <Routes>
         <Route element={<AdminLayout />}>
           <Route path="/dashboard" element={<p>dashboard content</p>} />
+          <Route path="/home" element={<p>home content</p>} />
           <Route path="/settings" element={<p>settings content</p>} />
         </Route>
       </Routes>
@@ -50,6 +51,7 @@ describe('AdminLayout', () => {
       'page',
     )
     expect(screen.getByRole('link', { name: 'Site Settings' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Home Page' })).toBeInTheDocument()
     expect(screen.getByText('dashboard content')).toBeInTheDocument()
   })
 

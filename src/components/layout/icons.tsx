@@ -23,6 +23,16 @@ export function DashboardIcon({ className }: IconProps) {
   )
 }
 
+export function HomeIcon({ className }: IconProps) {
+  return (
+    <svg {...strokeProps} className={className}>
+      <path d="M3 10.5 12 3l9 7.5" />
+      <path d="M5 9.5V21h14V9.5" />
+      <path d="M9 21v-6h6v6" />
+    </svg>
+  )
+}
+
 export function SettingsIcon({ className }: IconProps) {
   return (
     <svg {...strokeProps} className={className}>
@@ -67,6 +77,14 @@ export function ChevronRightIcon({ className }: IconProps) {
   return (
     <svg {...strokeProps} className={className}>
       <polyline points="9 18 15 12 9 6" />
+    </svg>
+  )
+}
+
+export function ChevronDownIcon({ className }: IconProps) {
+  return (
+    <svg {...strokeProps} className={className}>
+      <polyline points="6 9 12 15 18 9" />
     </svg>
   )
 }

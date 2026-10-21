@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { useAuth } from '../../auth/useAuth'
 import { FullPageSpinner } from '../../../components/ui/FullPageSpinner'
 import { Alert } from '../../../components/ui/Alert'
+import { Toast } from '../../../components/ui/Toast'
 import { useSettings } from '../useSettings'
 import { SettingsForm } from '../components/SettingsForm'
 import { SettingsEmptyState } from '../components/SettingsEmptyState'
@@ -34,7 +35,7 @@ export function SettingsPage() {
     setSuccess(null)
     const result = await save(values, admin?.uid ?? '')
     if (!result) {
-      setSuccess('Settings saved.')
+      setSuccess('Successfully saved changes')
     }
   }
 
@@ -71,11 +72,12 @@ export function SettingsPage() {
         defaultValues={defaultValues}
         onSubmit={handleSave}
         isSaving={status === 'saving'}
-        successMessage={success}
         errorMessage={status === 'ready' && error ? error : null}
       />
 
       <UnsavedChangesGuard when={dirty && status === 'ready'} />
+
+      {success ? <Toast message={success} onDismiss={() => setSuccess(null)} /> : null}
     </div>
   )
 }
