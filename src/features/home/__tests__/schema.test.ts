@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cardTextSchema, homeTextSchema } from '../schema'
+import { cardTextSchema, heroTextSchema, homeTextSchema } from '../schema'
 
 const CARD = {
   alt: 'A technician testing a distribution panel',
@@ -56,5 +56,14 @@ describe('homeTextSchema', () => {
 
   it('requires hero alt text', () => {
     expect(homeTextSchema.safeParse({ ...HOME, heroAlt: ' ' }).success).toBe(false)
+  })
+})
+
+describe('heroTextSchema', () => {
+  it('requires and trims the hero alt text', () => {
+    expect(heroTextSchema.safeParse({ heroAlt: ' ' }).success).toBe(false)
+    expect(heroTextSchema.parse({ heroAlt: '  A technician at a panel  ' }).heroAlt).toBe(
+      'A technician at a panel',
+    )
   })
 })

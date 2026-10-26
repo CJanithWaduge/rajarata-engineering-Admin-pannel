@@ -11,6 +11,7 @@ export function HomeContentPage() {
   const { admin } = useAuth()
   const { status, content, exists, error, version, reload, save } = useHomeContent()
   const [success, setSuccess] = useState<string | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   if (status === 'loading') {
     return <FullPageSpinner />
@@ -19,8 +20,11 @@ export function HomeContentPage() {
   const handleSave = async (draft: HomeDraft) => {
     if (!admin) return
     setSuccess(null)
+    setSaveError(null)
     const result = await save(draft, admin.uid)
-    if (!result) {
+    if (result) {
+      setSaveError(result.message)
+    } else {
       setSuccess('Successfully saved changes')
     }
   }
@@ -55,13 +59,10 @@ export function HomeContentPage() {
           {!exists ? (
             <Alert variant="info">
               No home page content exists yet. The public site is currently showing its
-              built-in Home content. Choose a hero image, fill in all three cards, and save
-              to create the{' '}
-              <code className="rounded-chip bg-surface-container px-1.5 py-0.5 font-mono text-[0.85em]">
-                site/home
-              </code>{' '}
-              document. Nothing is written until you save, and no placeholder values are
-              created automatically.
+              built-in Home content. You can save just the section you want to change;
+              blank sections keep the public site&apos;s current content. Nothing is
+              written until you save, and no placeholder values are created
+              automatically.
             </Alert>
           ) : null}
 
@@ -76,6 +77,14 @@ export function HomeContentPage() {
       )}
 
       {success ? <Toast message={success} onDismiss={() => setSuccess(null)} /> : null}
+      {saveError ? (
+        <Toast
+          variant="error"
+          message={saveError}
+          duration={8000}
+          onDismiss={() => setSaveError(null)}
+        />
+      ) : null}
     </div>
   )
 }

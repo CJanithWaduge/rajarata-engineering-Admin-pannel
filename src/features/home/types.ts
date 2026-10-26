@@ -36,6 +36,10 @@ export type NewImage = {
   height: number
   size: number
   contentType: ImageContentType
+  /** Original byte size before any optimization. */
+  originalSize: number
+  /** True when the file was downscaled and re-encoded. */
+  optimized: boolean
 }
 
 export type StoredImage = {

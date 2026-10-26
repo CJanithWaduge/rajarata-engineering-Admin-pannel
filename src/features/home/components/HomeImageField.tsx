@@ -1,5 +1,15 @@
+import {
+  IMAGE_RULES,
+  INLINE_IMAGE_MAX_BYTES_LABEL,
+  INLINE_IMAGE_TARGETS,
+  MAX_SOURCE_BYTES_LABEL,
+  type ImageKind,
+} from '../constants'
+import { INLINE_MEDIA_ENABLED } from '../mediaMode'
+
 type Props = {
   id: string
+  kind: ImageKind
   label: string
   imageUrl: string
   meta: string | null
@@ -13,6 +23,7 @@ const ACCEPT = '.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp'
 
 export function HomeImageField({
   id,
+  kind,
   label,
   imageUrl,
   meta,
@@ -21,6 +32,12 @@ export function HomeImageField({
   disabled,
   onSelect,
 }: Props) {
+  const rule = IMAGE_RULES[kind]
+  const target = INLINE_IMAGE_TARGETS[kind]
+  const inlineHint = INLINE_MEDIA_ENABLED
+    ? ` Saved inline at up to ${target.maxWidth} × ${target.maxHeight} px and ${INLINE_IMAGE_MAX_BYTES_LABEL[kind]}.`
+    : ''
+
   return (
     <div className="flex flex-col gap-3">
       <span
@@ -80,7 +97,7 @@ export function HomeImageField({
         </p>
       ) : (
         <p className="font-body-sm text-body-sm text-secondary">
-          JPEG, PNG, or WebP. The file is checked before it can be uploaded.
+          {`Min ${rule.minWidth} × ${rule.minHeight} px · max ${rule.maxWidth} × ${rule.maxHeight} px · aspect ${rule.minAspect}:1–${rule.maxAspect}:1 · JPEG, PNG or WebP · source up to ${MAX_SOURCE_BYTES_LABEL} · large files are optimized automatically.${inlineHint}`}
         </p>
       )}
     </div>

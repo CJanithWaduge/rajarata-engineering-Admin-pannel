@@ -24,6 +24,10 @@ export const cardTextSchema = z.object({
   tag: optionalText('Tag', TEXT_LIMITS.tag),
 })
 
+export const heroTextSchema = z.object({
+  heroAlt: requiredText('Hero image alt text', TEXT_LIMITS.alt),
+})
+
 export const homeTextSchema = z.object({
   heroAlt: requiredText('Hero image alt text', TEXT_LIMITS.alt),
   cards: z

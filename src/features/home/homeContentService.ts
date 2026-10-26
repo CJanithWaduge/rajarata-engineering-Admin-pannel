@@ -6,11 +6,13 @@ import {
   Timestamp,
 } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
-import { CARD_COUNT } from './constants'
-import { emptyProject } from './defaults'
+import { CARD_COUNT, INLINE_MEDIA_DOC_BUDGET } from './constants'
+import { EMPTY_IMAGE, emptyProject } from './defaults'
 import { HomeError, logHomeError, toHomeError } from './errors'
-import { homeTextSchema } from './schema'
+import { toInlineImage } from './inlineMedia'
+import { INLINE_MEDIA_ENABLED } from './mediaMode'
 import { deleteHomeObject, uploadHomeImage } from './storageService'
+import { validateHomeDraft } from './validation'
 import type {
   FeaturedProject,
   HomeContent,
@@ -147,6 +149,10 @@ async function resolveImage(
     )
   }
 
+  if (INLINE_MEDIA_ENABLED) {
+    return { image: await toInlineImage(selection, alt), uploaded: false }
+  }
+
   const image = await uploadHomeImage({
     file: selection.file,
     kind,
@@ -170,59 +176,96 @@ export async function saveHomeContent(
   uid: string,
   previous: HomeContent | null,
 ): Promise<HomeContent> {
-  const parsed = homeTextSchema.safeParse({
-    heroAlt: draft.hero.alt,
-    cards: draft.cards.map((card) => ({
-      alt: card.alt,
-      category: card.category,
-      venue: card.venue,
-      topic: card.topic,
-      tag: card.tag,
-    })),
-  })
+  const validation = validateHomeDraft(draft)
+  const firstError =
+    Object.values(validation.textErrors)[0] ?? Object.values(validation.imageErrors)[0]
 
-  if (!parsed.success) {
-    throw new HomeError('validation')
+  if (firstError) {
+    throw new HomeError('validation', firstError)
   }
 
-  if (draft.hero.image.kind === 'none') {
-    throw new HomeError('validation', 'Choose a hero image before saving.')
-  }
-
+  const normalized = validation.normalized
   const uploaded: HomeImage[] = []
+  const projects: FeaturedProject[] = Array.from(
+    { length: CARD_COUNT },
+    () => emptyProject(),
+  )
 
   try {
-    const hero = await resolveImage(draft.hero.image, 'hero', undefined, parsed.data.heroAlt)
-    if (hero.uploaded) uploaded.push(hero.image)
+    // Start every upload in the same tick. Awaiting hero -> card 1 -> card 2 ->
+    // card 3 made a four-image save take the sum of four round trips (and the
+    // resumable upload protocol uses several requests per file), which is what
+    // made saving feel stalled on a normal connection.
+    const jobs: Array<Promise<void>> = []
 
-    const projects: FeaturedProject[] = []
+    let heroImage: HomeImage = { ...EMPTY_IMAGE, alt: '' }
+    if (normalized.hero.image.kind !== 'none') {
+      jobs.push(
+        resolveImage(
+          normalized.hero.image,
+          'hero',
+          undefined,
+          normalized.hero.alt,
+        ).then((hero) => {
+          heroImage = hero.image
+          if (hero.uploaded) uploaded.push(hero.image)
+        }),
+      )
+    }
 
     for (let index = 0; index < CARD_COUNT; index += 1) {
-      const card = draft.cards[index]
-      const text = parsed.data.cards[index]
+      const card = normalized.cards[index]
 
-      if (!card || !text) {
+      if (!card) {
         throw new HomeError('validation', `Card ${index + 1} is incomplete.`)
+      }
+
+      if (validation.blankCards[index] === true) {
+        continue
       }
 
       if (card.image.kind === 'none') {
         throw new HomeError('validation', `Choose an image for card ${index + 1}.`)
       }
 
-      const resolved = await resolveImage(card.image, 'card', index + 1, text.alt)
-      if (resolved.uploaded) uploaded.push(resolved.image)
+      jobs.push(
+        resolveImage(card.image, 'card', index + 1, card.alt).then((resolved) => {
+          if (resolved.uploaded) uploaded.push(resolved.image)
 
-      projects.push({
-        image: resolved.image,
-        category: text.category,
-        venue: text.venue,
-        topic: text.topic,
-        tag: text.tag,
-      })
+          projects[index] = {
+            image: resolved.image,
+            category: card.category,
+            venue: card.venue,
+            topic: card.topic,
+            tag: card.tag,
+          }
+        }),
+      )
+    }
+
+    // allSettled (not all) so a failure still waits for the other uploads and
+    // every object created by this attempt is known and can be rolled back.
+    const settled = await Promise.allSettled(jobs)
+    const failed = settled.find(
+      (result): result is PromiseRejectedResult => result.status === 'rejected',
+    )
+    if (failed) throw failed.reason
+
+    if (INLINE_MEDIA_ENABLED) {
+      const encodedBytes = [heroImage, ...projects.map((project) => project.image)].reduce(
+        (total, image) => total + image.url.length,
+        0,
+      )
+      if (encodedBytes > INLINE_MEDIA_DOC_BUDGET) {
+        throw new HomeError(
+          'validation',
+          'These images are too large to store without Firebase Storage. Choose smaller or simpler images.',
+        )
+      }
     }
 
     await setDoc(HOME_REF, {
-      hero: toDocImage(hero.image),
+      hero: toDocImage(heroImage),
       featuredProjects: projects.map(toDocProject),
       updatedAt: serverTimestamp(),
       updatedBy: uid,
@@ -235,7 +278,7 @@ export async function saveHomeContent(
         ]
       : []
     const newPaths = new Set([
-      hero.image.path,
+      heroImage.path,
       ...projects.map((project) => project.image.path),
     ])
 
@@ -246,7 +289,7 @@ export async function saveHomeContent(
     )
 
     return {
-      hero: hero.image,
+      hero: heroImage,
       featuredProjects: projects,
       updatedAt: new Date(),
       updatedBy: uid,

@@ -5,6 +5,8 @@ type ToastProps = {
   onDismiss: () => void
   /** Milliseconds before the toast dismisses itself. */
   duration?: number
+  /** Errors use the error colour and `role="alert"`. */
+  variant?: 'success' | 'error'
 }
 
 /**
@@ -12,8 +14,14 @@ type ToastProps = {
  * assistive technology, and disappears on its own so it never becomes stale
  * inline content.
  */
-export function Toast({ message, onDismiss, duration = 4000 }: ToastProps) {
+export function Toast({
+  message,
+  onDismiss,
+  duration = 4000,
+  variant = 'success',
+}: ToastProps) {
   const dismissRef = useRef(onDismiss)
+  const isError = variant === 'error'
 
   useEffect(() => {
     dismissRef.current = onDismiss
@@ -26,29 +34,48 @@ export function Toast({ message, onDismiss, duration = 4000 }: ToastProps) {
 
   return (
     <div
-      role="status"
+      role={isError ? 'alert' : 'status'}
       className="motion-safe:animate-[toast-in_180ms_ease-out] fixed bottom-4 left-4 right-4 z-[60] overflow-hidden rounded-card border border-outline-variant bg-surface-container-lowest shadow-overlay sm:bottom-6 sm:left-auto sm:right-6 sm:w-80"
     >
       <span
         aria-hidden="true"
-        className="absolute inset-y-0 left-0 w-[3px] bg-primary-container"
+        className={`absolute inset-y-0 left-0 w-[3px] ${isError ? 'bg-error' : 'bg-primary-container'}`}
       />
       <div className="flex items-start gap-3 py-3.5 pl-5 pr-3">
         <span
           aria-hidden="true"
-          className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-container-high text-on-surface"
+          className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+            isError
+              ? 'bg-error-container text-on-error-container'
+              : 'bg-surface-container-high text-on-surface'
+          }`}
         >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-3.5 w-3.5"
-          >
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
+          {isError ? (
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-3.5 w-3.5"
+            >
+              <line x1="12" y1="8" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12" y2="17.01" />
+            </svg>
+          ) : (
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-3.5 w-3.5"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          )}
         </span>
 
         <p className="min-w-0 flex-1 font-label-md text-label-md text-on-surface">

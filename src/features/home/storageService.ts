@@ -1,4 +1,9 @@
-import { deleteObject, getDownloadURL, ref, uploadBytes } from 'firebase/storage'
+import {
+  deleteObject,
+  getDownloadURL,
+  ref,
+  uploadBytesResumable,
+} from 'firebase/storage'
 import { storage } from '../../lib/firebase'
 import { EXTENSION_BY_TYPE, STORAGE_ROOTS, type ImageKind } from './constants'
 import type { HomeImage, ImageContentType } from './types'
@@ -11,6 +16,48 @@ export type UploadHomeImageInput = {
   height: number
   contentType: ImageContentType
   alt: string
+}
+
+/**
+ * A stalled Storage request never settles — for example when the project has no
+ * bucket yet and the browser SDK keeps retrying a blocked request. Without a
+ * ceiling the form stays on "Saving…" forever. The upload is failed as soon as
+ * no bytes have moved for 20 s, while a slow-but-progressing upload keeps
+ * going; the download-URL lookup gets its own ceiling.
+ */
+const STALL_TIMEOUT_MS = 20_000
+const DOWNLOAD_URL_TIMEOUT_MS = 20_000
+
+type CodedError = Error & { code: string }
+
+function timeoutError(): CodedError {
+  const error = new Error('The image upload timed out.') as CodedError
+  error.code = 'storage/timeout'
+  return error
+}
+
+function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  onTimeout: () => void,
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      onTimeout()
+      reject(timeoutError())
+    }, ms)
+
+    promise.then(
+      (value) => {
+        clearTimeout(timer)
+        resolve(value)
+      },
+      (error: unknown) => {
+        clearTimeout(timer)
+        reject(error)
+      },
+    )
+  })
 }
 
 function createId(): string {
@@ -33,11 +80,53 @@ export async function uploadHomeImage(input: UploadHomeImageInput): Promise<Home
   const path = `${folder}/${createId()}.${extension}`
   const objectRef = ref(storage, path)
 
-  await uploadBytes(objectRef, input.file, {
+  const task = uploadBytesResumable(objectRef, input.file, {
     contentType: input.contentType,
     cacheControl: 'public,max-age=31536000,immutable',
   })
-  const url = await getDownloadURL(objectRef)
+
+  await new Promise<void>((resolve, reject) => {
+    let stallTimer: ReturnType<typeof setTimeout>
+    let lastBytes = -1
+
+    const clear = () => clearTimeout(stallTimer)
+
+    const arm = () => {
+      clear()
+      stallTimer = setTimeout(() => {
+        // Cancelling produces a `storage/canceled` error; the rejection below
+        // is the clearer signal, and the later error callback is a no-op.
+        task.cancel()
+        reject(timeoutError())
+      }, STALL_TIMEOUT_MS)
+    }
+
+    task.on(
+      'state_changed',
+      (snapshot) => {
+        if (snapshot.bytesTransferred > lastBytes) {
+          lastBytes = snapshot.bytesTransferred
+          arm()
+        }
+      },
+      (error) => {
+        clear()
+        reject(error)
+      },
+      () => {
+        clear()
+        resolve()
+      },
+    )
+
+    arm()
+  })
+
+  const url = await withTimeout(
+    getDownloadURL(objectRef),
+    DOWNLOAD_URL_TIMEOUT_MS,
+    () => {},
+  )
 
   return {
     url,

@@ -39,6 +39,7 @@ vi.mock('../components/UnsavedChangesGuard', () => ({
 }))
 
 import { HomeContentPage } from '../pages/HomeContentPage'
+import { HomeError } from '../errors'
 import type { HomeContent, HomeImage } from '../types'
 
 function image(prefix: string): HomeImage {
@@ -112,8 +113,23 @@ describe('HomeContentPage', () => {
     )
   })
 
-  it('shows the empty state when the document does not exist', () => {
-    mocks.state.content = null
+  it('shows an error toast when saving fails', async () => {
+    const user = userEvent.setup()
+    mocks.save.mockResolvedValue(new HomeError('upload'))
+    render(<HomeContentPage />)
+
+    const venues = screen.getAllByLabelText('Venue')
+    await user.clear(venues[1])
+    await user.type(venues[1], 'Kandy')
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Firebase Storage is not ready. Enable Storage for this project, deploy storage.rules, then try again.',
+    )
+    expect(screen.queryByText('Successfully saved changes')).not.toBeInTheDocument()
+  })
+
+  it('shows the empty state when the document does not exist', () => {    mocks.state.content = null
     mocks.state.exists = false
 
     render(<HomeContentPage />)

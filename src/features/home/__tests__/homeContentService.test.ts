@@ -41,6 +41,7 @@ vi.mock('../storageService', () => ({
   deleteHomeObject: mocks.deleteHomeObject,
 }))
 
+import { createEmptyDraft } from '../defaults'
 import { getHomeContent, saveHomeContent } from '../homeContentService'
 import type { HomeContent, HomeDraft, HomeImage } from '../types'
 
@@ -126,6 +127,8 @@ function newImageSelection() {
     height: 1000,
     size: 1000,
     contentType: 'image/jpeg' as const,
+    originalSize: 1000,
+    optimized: false,
   }
 }
 
@@ -293,6 +296,48 @@ describe('saveHomeContent', () => {
     expect(payload.hero.imageAlt).toBe('New hero')
   })
 
+  it('starts hero and card uploads together instead of one after another', async () => {
+    const draft = createEmptyDraft()
+    draft.hero = { image: newImageSelection(), alt: 'Hero alt' }
+    draft.cards[0] = {
+      image: newImageSelection(),
+      alt: 'Card one alt',
+      category: 'Industrial',
+      venue: 'Anuradhapura',
+      topic: 'Distribution',
+      tag: 'MV / LV',
+    }
+    draft.cards[1] = {
+      image: newImageSelection(),
+      alt: 'Card two alt',
+      category: 'Commercial',
+      venue: 'Anuradhapura',
+      topic: 'Panels',
+      tag: 'Panels',
+    }
+
+    const resolvers: Array<(value: HomeImage) => void> = []
+    mocks.uploadHomeImage.mockImplementation(
+      () =>
+        new Promise<HomeImage>((resolve) => {
+          resolvers.push(resolve)
+        }),
+    )
+
+    const saving = saveHomeContent(draft, 'uid-1', null)
+
+    // The previous implementation awaited each upload before starting the
+    // next, so only one call would exist at this point.
+    expect(mocks.uploadHomeImage).toHaveBeenCalledTimes(3)
+
+    resolvers.forEach((resolve, index) => {
+      resolve({ ...image(`new-${index}`), alt: 'New image' })
+    })
+    await saving
+
+    expect(mocks.setDoc).toHaveBeenCalledTimes(1)
+  })
+
   it('deletes every object uploaded by a failed write', async () => {
     const previous = storedContent()
     const draft = draftFrom(previous)
@@ -338,5 +383,77 @@ describe('saveHomeContent', () => {
       code: 'validation',
     })
     expect(mocks.uploadHomeImage).not.toHaveBeenCalled()
+  })
+
+  it('writes blank slots when only one card is saved', async () => {
+    const draft = createEmptyDraft()
+    draft.cards[0] = {
+      image: newImageSelection(),
+      alt: 'Card one alt',
+      category: 'Industrial',
+      venue: 'Anuradhapura',
+      topic: 'Industrial Distribution',
+      tag: '',
+    }
+    mocks.uploadHomeImage.mockResolvedValue({
+      ...image('card-1-new'),
+      alt: 'Card one alt',
+    })
+
+    const saved = await saveHomeContent(draft, 'uid-1', null)
+
+    expect(mocks.uploadHomeImage).toHaveBeenCalledTimes(1)
+    expect(mocks.setDoc).toHaveBeenCalledTimes(1)
+
+    const payload = mocks.setDoc.mock.calls[0]?.[1] as {
+      hero: { imageUrl: string }
+      featuredProjects: Array<{ imageUrl: string; category: string }>
+    }
+    expect(payload.hero.imageUrl).toBe('')
+    expect(payload.featuredProjects).toHaveLength(3)
+    expect(payload.featuredProjects[0]?.imageUrl).toContain('card-1-new')
+    expect(payload.featuredProjects[0]?.category).toBe('Industrial')
+    expect(payload.featuredProjects[1]?.imageUrl).toBe('')
+    expect(payload.featuredProjects[2]?.imageUrl).toBe('')
+    expect(saved.hero.url).toBe('')
+    expect(saved.featuredProjects[0]?.category).toBe('Industrial')
+  })
+
+  it('uploads only the hero when the cards are blank', async () => {
+    const draft = createEmptyDraft()
+    draft.hero = { image: newImageSelection(), alt: 'Hero alt' }
+    mocks.uploadHomeImage.mockResolvedValue({ ...image('hero-new'), alt: 'Hero alt' })
+
+    const saved = await saveHomeContent(draft, 'uid-1', null)
+
+    expect(mocks.uploadHomeImage).toHaveBeenCalledTimes(1)
+    const payload = mocks.setDoc.mock.calls[0]?.[1] as {
+      hero: { imageUrl: string }
+      featuredProjects: Array<{ imageUrl: string }>
+    }
+    expect(payload.hero.imageUrl).toContain('hero-new')
+    expect(payload.featuredProjects).toHaveLength(3)
+    expect(
+      payload.featuredProjects.every((project) => project.imageUrl === ''),
+    ).toBe(true)
+    expect(saved.featuredProjects).toHaveLength(3)
+  })
+
+  it('rejects a partially filled card instead of treating it as blank', async () => {
+    const draft = createEmptyDraft()
+    draft.cards[0] = {
+      image: { kind: 'none' },
+      alt: '',
+      category: 'Industrial',
+      venue: '',
+      topic: '',
+      tag: '',
+    }
+
+    await expect(saveHomeContent(draft, 'uid-1', null)).rejects.toMatchObject({
+      code: 'validation',
+    })
+    expect(mocks.uploadHomeImage).not.toHaveBeenCalled()
+    expect(mocks.setDoc).not.toHaveBeenCalled()
   })
 })

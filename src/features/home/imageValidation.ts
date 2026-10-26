@@ -1,9 +1,19 @@
 import {
   ALLOWED_CONTENT_TYPES,
   ALLOWED_EXTENSIONS,
+  COMPRESSION_TARGETS,
   IMAGE_RULES,
+  INLINE_IMAGE_MAX_BYTES,
+  INLINE_IMAGE_TARGETS,
+  MAX_SOURCE_BYTES,
+  MAX_SOURCE_BYTES_LABEL,
+  MAX_SOURCE_PIXELS,
+  MAX_SOURCE_PIXELS_LABEL,
+  OPTIMIZE_ABOVE_BYTES,
   type ImageKind,
 } from './constants'
+import { compressImage } from './imageCompression'
+import { INLINE_MEDIA_ENABLED } from './mediaMode'
 import type { ImageContentType } from './types'
 
 const ALLOWED_EXTENSION_SET = new Set<string>(ALLOWED_EXTENSIONS)
@@ -17,6 +27,13 @@ export type ImageCandidate = {
   height: number
 }
 
+export type ValidatedMetadata = {
+  width: number
+  height: number
+  size: number
+  contentType: ImageContentType
+}
+
 export type ValidatedImage = {
   file: File
   /** Local preview URL. The caller owns it and must revoke it. */
@@ -25,6 +42,10 @@ export type ValidatedImage = {
   height: number
   size: number
   contentType: ImageContentType
+  /** Original byte size before any optimization. */
+  originalSize: number
+  /** True when the file was downscaled and re-encoded. */
+  optimized: boolean
 }
 
 export type ImageFileResult =
@@ -50,7 +71,11 @@ function extensionMatches(extension: string, contentType: ImageContentType): boo
   return extension === 'webp'
 }
 
-function validateBasics(candidate: ImageCandidate, kind: ImageKind): BasicResult {
+function validateBasics(
+  candidate: ImageCandidate,
+  kind: ImageKind,
+  options: { enforceMaxBytes?: boolean } = {},
+): BasicResult {
   const rule = IMAGE_RULES[kind]
   const extension = extensionOf(candidate.name)
 
@@ -76,11 +101,42 @@ function validateBasics(candidate: ImageCandidate, kind: ImageKind): BasicResult
     return failure(`${rule.label} is empty. Choose a different file.`)
   }
 
-  if (candidate.size > rule.maxBytes) {
+  if (options.enforceMaxBytes !== false && candidate.size > rule.maxBytes) {
     return failure(`${rule.label} is too large. The maximum is ${rule.maxBytesLabel}.`)
   }
 
   return { ok: true, contentType }
+}
+
+function validateMinimumDimensions(
+  candidate: ImageCandidate,
+  kind: ImageKind,
+): { ok: true } | { ok: false; message: string } {
+  const rule = IMAGE_RULES[kind]
+
+  if (candidate.width < rule.minWidth || candidate.height < rule.minHeight) {
+    return failure(
+      `${rule.label} is too small. Use at least ${rule.minWidth} x ${rule.minHeight} px.`,
+    )
+  }
+
+  return { ok: true }
+}
+
+function validateAspect(
+  candidate: ImageCandidate,
+  kind: ImageKind,
+): { ok: true } | { ok: false; message: string } {
+  const rule = IMAGE_RULES[kind]
+  const aspect = candidate.width / candidate.height
+
+  if (aspect < rule.minAspect || aspect > rule.maxAspect) {
+    return failure(
+      `${rule.label} has an unsupported shape. Use an aspect ratio between ${rule.minAspect.toFixed(2)}:1 and ${rule.maxAspect.toFixed(2)}:1.`,
+    )
+  }
+
+  return { ok: true }
 }
 
 /**
@@ -90,30 +146,25 @@ function validateBasics(candidate: ImageCandidate, kind: ImageKind): BasicResult
 export function validateImageMetadata(
   candidate: ImageCandidate,
   kind: ImageKind,
-): { ok: true; metadata: Omit<ValidatedImage, 'file' | 'previewUrl'> } | { ok: false; message: string } {
+  options: { requireMinimumDimensions?: boolean } = {},
+): { ok: true; metadata: ValidatedMetadata } | { ok: false; message: string } {
   const basics = validateBasics(candidate, kind)
   if (!basics.ok) return basics
 
-  const rule = IMAGE_RULES[kind]
-
-  if (candidate.width < rule.minWidth || candidate.height < rule.minHeight) {
-    return failure(
-      `${rule.label} is too small. Use at least ${rule.minWidth} x ${rule.minHeight} px.`,
-    )
+  if (options.requireMinimumDimensions !== false) {
+    const minimum = validateMinimumDimensions(candidate, kind)
+    if (!minimum.ok) return minimum
   }
 
+  const rule = IMAGE_RULES[kind]
   if (candidate.width > rule.maxWidth || candidate.height > rule.maxHeight) {
     return failure(
       `${rule.label} is too large in pixel dimensions. Use at most ${rule.maxWidth} x ${rule.maxHeight} px.`,
     )
   }
 
-  const aspect = candidate.width / candidate.height
-  if (aspect < rule.minAspect || aspect > rule.maxAspect) {
-    return failure(
-      `${rule.label} has an unsupported shape. Use an aspect ratio between ${rule.minAspect.toFixed(2)}:1 and ${rule.maxAspect.toFixed(2)}:1.`,
-    )
-  }
+  const aspect = validateAspect(candidate, kind)
+  if (!aspect.ok) return aspect
 
   return {
     ok: true,
@@ -187,16 +238,24 @@ async function readDimensions(file: File): Promise<{ width: number; height: numb
 }
 
 /**
- * Full client-side gate: extension, MIME, signature, size, decode, dimensions,
- * and aspect ratio. A failed file never reaches Firebase Storage; the caller
- * only receives a preview URL when every check passed.
+ * Full client-side gate: extension, MIME, signature, decode, dimensions, and
+ * aspect ratio. Files above the per-kind byte or dimension limit are optimized
+ * in-browser and revalidated. A failed file is never saved to Storage or
+ * Firestore; the caller only receives a preview URL when every check passed.
  */
 export async function readImageFile(file: File, kind: ImageKind): Promise<ImageFileResult> {
   const basics = validateBasics(
     { name: file.name, type: file.type, size: file.size, width: 0, height: 0 },
     kind,
+    { enforceMaxBytes: false },
   )
   if (!basics.ok) return basics
+
+  if (file.size > MAX_SOURCE_BYTES) {
+    return failure(
+      `The image is too large to process. Choose a file of ${MAX_SOURCE_BYTES_LABEL} or less.`,
+    )
+  }
 
   let bytes: Uint8Array
   try {
@@ -221,21 +280,79 @@ export async function readImageFile(file: File, kind: ImageKind): Promise<ImageF
     return failure('This image could not be decoded. Choose a different file.')
   }
 
+  const candidate = {
+    name: file.name,
+    type: file.type,
+    size: file.size,
+    width: dimensions.width,
+    height: dimensions.height,
+  }
+
+  const minimum = validateMinimumDimensions(candidate, kind)
+  if (!minimum.ok) return minimum
+
+  if (dimensions.width * dimensions.height > MAX_SOURCE_PIXELS) {
+    return failure(
+      `The image resolution is too large to process. Use at most ${MAX_SOURCE_PIXELS_LABEL}.`,
+    )
+  }
+
+  const aspect = validateAspect(candidate, kind)
+  if (!aspect.ok) return aspect
+
+  const target = INLINE_MEDIA_ENABLED ? INLINE_IMAGE_TARGETS[kind] : COMPRESSION_TARGETS[kind]
+  const compressWhenAbove = INLINE_MEDIA_ENABLED
+    ? INLINE_IMAGE_MAX_BYTES[kind]
+    : OPTIMIZE_ABOVE_BYTES[kind]
+  const needsCompression =
+    file.size > compressWhenAbove ||
+    dimensions.width > target.maxWidth ||
+    dimensions.height > target.maxHeight
+
+  let uploadFile = file
+  let uploadDimensions = dimensions
+  let optimized = false
+
+  if (needsCompression) {
+    const compressed = await compressImage(
+      file,
+      kind,
+      dimensions,
+      INLINE_MEDIA_ENABLED ? 'inline' : 'storage',
+    ).catch(() => null)
+    if (!compressed) {
+      return failure('The image could not be optimized. Choose a smaller file.')
+    }
+    if (!compressed.ok) return compressed
+
+    uploadFile = compressed.image.file
+    uploadDimensions = {
+      width: compressed.image.width,
+      height: compressed.image.height,
+    }
+    optimized = true
+  }
+
   const result = validateImageMetadata(
     {
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      width: dimensions.width,
-      height: dimensions.height,
+      name: uploadFile.name,
+      type: uploadFile.type,
+      size: uploadFile.size,
+      width: uploadDimensions.width,
+      height: uploadDimensions.height,
     },
     kind,
+    {
+      // An inline downscale may drop below the source minimum; the original was
+      // already checked above. Keep the byte/type/aspect checks in force.
+      requireMinimumDimensions: !(INLINE_MEDIA_ENABLED && optimized),
+    },
   )
   if (!result.ok) return result
 
   let previewUrl: string
   try {
-    previewUrl = URL.createObjectURL(file)
+    previewUrl = URL.createObjectURL(uploadFile)
   } catch {
     return failure('The image preview could not be created. Choose a different file.')
   }
@@ -243,9 +360,11 @@ export async function readImageFile(file: File, kind: ImageKind): Promise<ImageF
   return {
     ok: true,
     image: {
-      file,
+      file: uploadFile,
       previewUrl,
       ...result.metadata,
+      originalSize: file.size,
+      optimized,
     },
   }
 }

@@ -17,7 +17,8 @@ const messages: Record<HomeErrorCode, string> = {
     'Firestore is not set up for this project; home page content could not be reached.',
   network: 'Network error. Check your connection and try again.',
   validation: 'Some home page values are invalid. Check the fields below.',
-  upload: 'An image could not be uploaded. Check Storage rules and try again.',
+  upload:
+    'Firebase Storage is not ready. Enable Storage for this project, deploy storage.rules, then try again.',
   unknown: 'Could not save home page content. Please try again.',
 }
 

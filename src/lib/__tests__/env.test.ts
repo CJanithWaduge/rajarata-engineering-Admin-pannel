@@ -28,7 +28,11 @@ describe('firebase env', () => {
 
     const { env } = await import('../env')
 
-    expect(env).toEqual({ ...validEnv, VITE_FIREBASE_DATABASE_ID: '(default)' })
+    expect(env).toEqual({
+      ...validEnv,
+      VITE_FIREBASE_DATABASE_ID: '(default)',
+      VITE_FIREBASE_USE_EMULATOR: '',
+    })
     expect(Object.isFrozen(env)).toBe(true)
   })
 

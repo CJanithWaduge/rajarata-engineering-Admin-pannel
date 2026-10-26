@@ -22,4 +22,17 @@ describe('Toast', () => {
 
     expect(onDismiss).toHaveBeenCalledTimes(1)
   })
+
+  it('announces errors as alerts', () => {
+    render(
+      <Toast
+        variant="error"
+        message="Firebase Storage is not ready."
+        onDismiss={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Firebase Storage is not ready.')
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
 })

@@ -10,6 +10,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:emulator": "npx --yes firebase-tools@^15 emulators:exec --project demo-rajarata-home --only auth,firestore,storage \"vitest run --config vitest.emulator.config.ts\"",
+    "test:emulator:only": "vitest run --config vitest.emulator.config.ts",
     "deploy:rules": "npx --yes firebase-tools@^15 deploy --only firestore:rules,storage"
   },
   "dependencies": {

@@ -9,7 +9,8 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('../imageValidation', () => ({
   readImageFile: mocks.readImageFile,
-  formatBytes: (bytes: number) => `${bytes} B`,
+  formatBytes: (bytes: number) =>
+    bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${bytes} B`,
 }))
 
 vi.mock('../components/UnsavedChangesGuard', () => ({
@@ -154,6 +155,84 @@ describe('HomeContentForm', () => {
     expect(draft.cards[2]?.venue).toBe('Anuradhapura')
   })
 
+  it('saves one card while the hero and other cards stay blank', async () => {
+    const user = userEvent.setup()
+    mocks.readImageFile.mockResolvedValue({
+      ok: true,
+      image: {
+        file: new File(['x'], 'card-1.jpg', { type: 'image/jpeg' }),
+        previewUrl: 'blob:card-1',
+        width: 1600,
+        height: 900,
+        size: 1000,
+        contentType: 'image/jpeg',
+        originalSize: 1000,
+        optimized: false,
+      },
+    })
+    renderForm(null)
+
+    await user.click(screen.getByRole('button', { name: 'Expand Card 1' }))
+    await user.upload(
+      screen.getByLabelText('Card 1 image') as HTMLInputElement,
+      new File(['x'], 'card-1.jpg', { type: 'image/jpeg' }),
+    )
+
+    const alts = screen.getAllByLabelText('Image alt text')
+    const categories = screen.getAllByLabelText('Category')
+    const venues = screen.getAllByLabelText('Venue')
+    const topics = screen.getAllByLabelText('Topic')
+    await user.type(alts[1]!, 'Card one alt')
+    await user.type(categories[0]!, 'Industrial')
+    await user.type(venues[0]!, 'Anuradhapura')
+    await user.type(topics[0]!, 'Industrial Distribution')
+
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    expect(mocks.onSubmit).toHaveBeenCalledTimes(1)
+    const draft = mocks.onSubmit.mock.calls[0]?.[0] as HomeDraft
+    expect(draft.hero.image.kind).toBe('none')
+    expect(draft.cards[0]?.image.kind).toBe('new')
+    expect(draft.cards[0]?.category).toBe('Industrial')
+    expect(draft.cards[1]?.image.kind).toBe('none')
+    expect(draft.cards[1]?.category).toBe('')
+    expect(draft.cards[2]?.image.kind).toBe('none')
+  })
+
+  it('saves only the hero while all cards stay blank', async () => {
+    const user = userEvent.setup()
+    mocks.readImageFile.mockResolvedValue({
+      ok: true,
+      image: {
+        file: new File(['x'], 'hero.jpg', { type: 'image/jpeg' }),
+        previewUrl: 'blob:hero',
+        width: 1600,
+        height: 1000,
+        size: 1000,
+        contentType: 'image/jpeg',
+        originalSize: 1000,
+        optimized: false,
+      },
+    })
+    renderForm(null)
+
+    await user.click(screen.getByRole('button', { name: 'Expand Hero image' }))
+    await user.upload(
+      screen.getByLabelText('Hero image') as HTMLInputElement,
+      new File(['x'], 'hero.jpg', { type: 'image/jpeg' }),
+    )
+
+    const alts = screen.getAllByLabelText('Image alt text')
+    await user.type(alts[0]!, 'Hero alt')
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    expect(mocks.onSubmit).toHaveBeenCalledTimes(1)
+    const draft = mocks.onSubmit.mock.calls[0]?.[0] as HomeDraft
+    expect(draft.hero.image.kind).toBe('new')
+    expect(draft.hero.alt).toBe('Hero alt')
+    expect(draft.cards.every((card) => card.image.kind === 'none')).toBe(true)
+  })
+
   it('blocks a save with an empty required field', async () => {
     const user = userEvent.setup()
     renderForm()
@@ -193,6 +272,33 @@ describe('HomeContentForm', () => {
     expect(document.querySelector('img[src="blob:new-hero"]')).toBeInTheDocument()
   })
 
+  it('shows the optimized size after a large image is reduced', async () => {
+    const user = userEvent.setup()
+    mocks.readImageFile.mockResolvedValue({
+      ok: true,
+      image: {
+        file: new File(['x'], 'hero.jpg', { type: 'image/jpeg' }),
+        previewUrl: 'blob:optimized',
+        width: 2400,
+        height: 1500,
+        size: 1024 * 1024,
+        contentType: 'image/jpeg',
+        originalSize: 8 * 1024 * 1024,
+        optimized: true,
+      },
+    })
+    renderForm()
+
+    await user.click(screen.getByRole('button', { name: 'Expand Hero image' }))
+    await user.upload(
+      screen.getByLabelText('Hero image') as HTMLInputElement,
+      new File(['x'], 'hero.jpg', { type: 'image/jpeg' }),
+    )
+
+    expect(await screen.findByText(/optimized from 8\.0 MB/)).toBeInTheDocument()
+    expect(document.querySelector('img[src="blob:optimized"]')).toBeInTheDocument()
+  })
+
   it('keeps the stored image and shows the reason when validation fails', async () => {
     const user = userEvent.setup()
     mocks.readImageFile.mockResolvedValue({
@@ -229,7 +335,9 @@ describe('HomeContentForm', () => {
     await user.type(venues[0], ' ')
     await user.click(screen.getByRole('button', { name: 'Save changes' }))
 
-    expect(await screen.findByText('Choose an image for this card.')).toBeInTheDocument()
+    expect(
+      await screen.findByText(/Choose an image for this card/),
+    ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Collapse Card 3' })).toBeInTheDocument()
     expect(mocks.onSubmit).not.toHaveBeenCalled()
   })
@@ -240,5 +348,14 @@ describe('HomeContentForm', () => {
     expect(screen.getAllByText('No image selected')).toHaveLength(4)
     expect(screen.getAllByLabelText('Category')).toHaveLength(3)
     expect(screen.getAllByLabelText('Category')[0]).toHaveValue('')
+  })
+
+  it('shows the resolution, aspect ratio, and size limits for each image', () => {
+    renderForm(null)
+
+    expect(screen.getByText(/Min 1600 × 1000 px/)).toBeInTheDocument()
+    expect(screen.getByText(/aspect 1.2:1–2:1/)).toBeInTheDocument()
+    expect(screen.getAllByText(/Min 1000 × 700 px/)).toHaveLength(3)
+    expect(screen.getAllByText(/aspect 1.4:1–1.9:1/)).toHaveLength(3)
   })
 })

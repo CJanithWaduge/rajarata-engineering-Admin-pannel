@@ -3,14 +3,16 @@
 ## Current state
 
 - Vite 8 + React 19 + TypeScript 7 + Tailwind 4 admin panel, scaffolded from `create-vite` `react-ts` and linted with **oxlint** (not ESLint).
-- Phase 1 (login, admin authorization, route guards), Phase 2 (`site/settings`), and Phase 3 (`site/home` + Storage uploads) are implemented. `/dashboard` is still a placeholder.
+- Phase 1 (login, admin authorization, route guards), Phase 2 (`site/settings`), and Phase 3 (`site/home` + Home image storage) are implemented. `/dashboard` is still a placeholder.
+- Home images currently use the **inline-media fallback**: compressed raster images are stored as `data:image/...;base64,...` URLs inside `site/home`, because the Firebase project is on Spark and has no Storage bucket. Inline mode is the default; set `VITE_FIREBASE_INLINE_MEDIA=false` to use the Storage pipeline once a bucket exists.
 - `main` has no commits yet. Verify work against files, not git history.
 - The content schema is locked for the two implemented singletons: `site/settings` and `site/home`. `admins/{uid|email}` is the admin allowlist. Do not invent collection names or field shapes for later phases.
+- `site/home` always stores a `hero` map and exactly three `featuredProjects` slots, but a slot may be blank. A blank slot is an empty map, not seeded content; the public site keeps its build-time hero/card for it. A started section must be complete (image + required text).
 
 ## Product and stack
 
 - React + Vite + Tailwind admin panel for the Rajarata Engineering public website.
-- Firebase Authentication (admin login), Firestore (all dynamic site content), Firebase Storage (Home page media).
+- Firebase Authentication (admin login), Firestore (all dynamic site content, including inline Home media), Firebase Storage (optional Home media when a bucket is provisioned).
 - This repo is the admin/CRUD surface only. The public website is separate and reads the same Firestore data.
 
 ## UI theme (mirrors the public site)
@@ -27,14 +29,14 @@
 ## Non-negotiable content rules
 
 - Never hardcode editable site content in JSX, constants, mock files, or seed data: hero copy, contact numbers, WhatsApp numbers, emails, addresses, service descriptions, image URLs, social links.
-- `.env` holds Firebase config only (`VITE_FIREBASE_*`) and is gitignored. Never print, echo, stage, or copy its values into source or docs.
+- `.env` holds Firebase config and runtime flags only (`VITE_FIREBASE_*`) and is gitignored. Never print, echo, stage, or copy its values into source or docs.
 - Anything prefixed `VITE_` is bundled into the client and publicly readable. The Firebase web config is not a secret; protection comes from Security Rules, not env secrecy.
 - `.env.example` must contain placeholders only. Site content never becomes a `VITE_` key.
 - Do not add fallback/demo content when a Firestore read fails; surface an error/empty state instead.
 
 ## Firebase and auth conventions
 
-- `src/lib/firebase.ts` is the only module that calls `initializeApp`, `getAuth`, `getFirestore`, or `getStorage`; it exports `app`, `auth`, `db`, `storage`. Storage uploads live behind `src/features/home/storageService.ts`; do not call `firebase/storage` from components.
+- `src/lib/firebase.ts` is the only module that calls `initializeApp`, `getAuth`, `getFirestore`, or `getStorage`; it exports `app`, `auth`, `db`, `storage`. Storage uploads live behind `src/features/home/storageService.ts`; inline conversion lives behind `src/features/home/inlineMedia.ts`. Do not call `firebase/storage` from components.
 - Login is email/password only. `signInAdmin` in `src/features/auth/authService.ts` performs the credential sign-in **and** verifies the account is provisioned as an admin; otherwise it signs out and throws a `not-admin` error.
 - An admin record can be keyed two ways, and both are supported deliberately:
   - `admins/{uid}` — canonical, revocation-friendly (delete/deactivate the doc).
@@ -44,7 +46,9 @@
 - Auth state lives in `AuthProvider` (single `onAuthStateChanged` subscription) and is consumed via `useAuth()`. Do not call `firebase/auth` from components.
 - `RequireAdmin` and `GuestOnly` are route-level guards. Guarding is UX only — `firestore.rules` is the security boundary.
 - Firestore rules are default-deny: `admins/{uid|email}` (self-read), `site/settings` (public read, admin write), and `site/home` (public read, admin write) are the allowed paths today. `storage.rules` allows public reads of `home/hero/*` and `home/projects/*`, with admin-only writes capped at 5 MB and 3 MB respectively. Every new content path needs an explicit rule; otherwise the feature is not done.
-- Media flow (implemented for Home): validate in the browser → upload to Storage → `getDownloadURL()` → save the URL/path/metadata in Firestore → delete replaced objects. Roll back new uploads if the document write fails.
+- Media flow (implemented for Home): validate in the browser → optimize oversized files with the Canvas API (source caps 25 MB / 60 MP; no new dependency) → revalidate the optimized file → then either upload to Storage (`getDownloadURL()`, save URL/path/metadata) or, unless `VITE_FIREBASE_INLINE_MEDIA=false`, encode the compressed file as a raster data URL and save it in `site/home`. Delete replaced Storage objects and roll back new uploads if the document write fails.
+- Inline mode is a deliberate Spark-plan fallback, not a general-purpose image CDN. Limits: hero ≤ 160 KB, fitted up to 1600×1200; each card ≤ 90 KB, fitted up to 1200×900; and all four encoded URLs together must stay under `INLINE_MEDIA_DOC_BUDGET` (900,000 characters) so the document stays below Firestore's 1 MiB limit. Compression tries progressively lower qualities; if it cannot meet the cap, the save fails instead of silently writing an oversized doc.
+- The public site accepts `https:` image URLs and raster `data:image/{jpeg,png,webp};base64,...` URLs. It must keep rejecting `data:image/svg+xml` and every other scheme.
 - Save feedback must be immediate: disable the submit control while writing and show success/error feedback after the write settles.
 
 ## Firebase project wiring (first-run checklist)
@@ -66,6 +70,7 @@
 
 - `src/lib/` — `env.ts` (validates the required `VITE_FIREBASE_*` keys, fails fast, defaults the optional `VITE_FIREBASE_DATABASE_ID`) and `firebase.ts`.
 - `src/features/auth/` — `types.ts`, `errors.ts`, `schema.ts`, `authService.ts`, `context.ts`, `AuthProvider.tsx`, `useAuth.ts`, `components/`, `pages/`, `guards/`.
+- `src/features/home/` — `constants.ts` (Storage and inline image limits), `mediaMode.ts` (`VITE_FIREBASE_INLINE_MEDIA`), `inlineMedia.ts` (FileReader → data URL), `homeContentService.ts`, `storageService.ts`, validation/compression modules, `components/`, `pages/`.
 - `src/components/ui/` — domain-agnostic form/UI primitives reused by all later CRUD forms (`Button`, `TextField`, `PasswordField`, `Alert`, `Toast`, `FullPageSpinner`).
 - `src/components/brand/BrandLogo.tsx` — brand mark mirrored from the public site.
 - `src/components/layout/AdminLayout.tsx` — protected shell: fixed sidebar navigation with a persisted collapse-to-icon-rail state (`localStorage` key `rajarata-admin.sidebar-collapsed`), an off-canvas drawer below `lg`, and sign-out in the sidebar footer. Icons live in `src/components/layout/icons.tsx` (inline SVG, no icon dependency).
@@ -84,14 +89,17 @@ Run from the repo root with npm (a `package-lock.json` exists; do not switch pac
 - `npm run test` — Vitest watch mode.
 - `npm run test:run` — single CI-style run.
 - Single file: `npm run test:run -- src/features/auth/__tests__/authService.test.ts`.
+- `npm run test:emulator` — starts the Auth/Firestore/Storage emulators (project `demo-rajarata-home`, named database `default`), runs every `*.emulator.test.ts`, then shuts them down. Requires Java for the Firestore emulator. `npm run test:emulator:only` runs the same suite against emulators you started yourself.
 - `npm run deploy:rules` — deploy `firestore.rules` and `storage.rules` with `npx firebase-tools` (project pinned in `.firebaserc`). Requires `npx firebase-tools login` once, the named Firestore database to exist, and Firebase Storage to be provisioned.
 
 ## Testing quirks
 
 - Vitest 5 + jsdom. Config lives in the `test` block of `vite.config.ts`; setup is `src/test/setup.ts` (jest-dom + RTL cleanup).
 - Globals are **off**: import `describe`, `it`, `expect`, `vi` from `vitest` explicitly.
-- Firebase is never hit in tests. Mock the service boundary (`../authService`) or `firebase/*` modules with `vi.mock` + `vi.hoisted`; stub env with `vi.stubEnv` + `vi.resetModules` for `src/lib/env.ts`.
-- No emulator or test credentials are set up. Do not add tests that require a live Firebase project; the manual cases in `IMPLIMENTAION.md` cover real-network behavior, including HOME-022 (public hydration) and HOME-023 (Storage upload on Spark).
+- Unit tests never hit Firebase. Mock the service boundary (`../authService`) or `firebase/*` modules with `vi.mock` + `vi.hoisted`; stub env with `vi.stubEnv` + `vi.resetModules` for `src/lib/env.ts`.
+- Emulator tests are the exception: they import the real `src/lib/firebase.ts` after stubbing env and set `VITE_FIREBASE_USE_EMULATOR=true`, which makes `firebase.ts` connect to ports 9099/8080/9199 from `firebase.json`. They seed `admins/{uid}` through the Firestore REST API with `Authorization: Bearer owner` (client writes to `admins/*` are denied by design), then exercise real rules. They are excluded from `test:run`; run them with `npm run test:emulator`.
+- Unit tests force `VITE_FIREBASE_INLINE_MEDIA=false` in `src/test/setup.ts` so Storage-path tests are deterministic; the inline test file stubs it to `true` before importing the service. `home.emulator.test.ts` also forces inline mode off because it covers the Storage path. Do not rely on the developer's `.env` for either mode.
+- Do not add tests that require a live Firebase project; the manual cases in `IMPLIMENTAION.md` cover real-network behavior, including HOME-022 (public hydration) and HOME-023 (Storage upload on Spark).
 
 ## Toolchain quirks
 
@@ -105,5 +113,6 @@ Run from the repo root with npm (a `package-lock.json` exists; do not switch pac
 - Confirm no site content, contact details, or media URLs were hardcoded.
 - Confirm `.env` was not modified into source, printed, or staged, and no service-account key was added.
 - Confirm new Firestore/Storage paths have matching rules; otherwise the feature is not done.
+- Confirm inline media is intentional: it is the default unless `VITE_FIREBASE_INLINE_MEDIA=false`; keep each image under its inline cap and the combined encoded URLs under `INLINE_MEDIA_DOC_BUDGET`.
 - Run `npm run lint`, `npm run test:run`, and `npm run build`.
 - Update this file when commands, folder conventions, or schema decisions change.

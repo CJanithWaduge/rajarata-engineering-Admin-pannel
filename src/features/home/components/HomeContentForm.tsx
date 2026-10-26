@@ -5,7 +5,7 @@ import { TextField } from '../../../components/ui/TextField'
 import { CARD_COUNT, type ImageKind } from '../constants'
 import { draftFromContent } from '../defaults'
 import { formatBytes, readImageFile } from '../imageValidation'
-import { homeTextSchema } from '../schema'
+import { validateHomeDraft } from '../validation'
 import type { CardTextField, HomeContent, HomeDraft, NewImage } from '../types'
 import { CollapsibleSection } from './CollapsibleSection'
 import { FeaturedProjectEditor } from './FeaturedProjectEditor'
@@ -27,7 +27,11 @@ function textFieldId(path: string): string {
 
 function imageMeta(draft: HomeDraft['hero']): string | null {
   if (draft.image.kind === 'new') {
-    return `${draft.image.file.name} · ${draft.image.width} x ${draft.image.height} px · ${formatBytes(draft.image.size)}`
+    const optimized =
+      draft.image.optimized && draft.image.originalSize > draft.image.size
+        ? ` · optimized from ${formatBytes(draft.image.originalSize)}`
+        : ''
+    return `${draft.image.file.name} · ${draft.image.width} x ${draft.image.height} px · ${formatBytes(draft.image.size)}${optimized}`
   }
   if (draft.image.kind === 'stored' && draft.image.image.width > 0) {
     return `${draft.image.image.width} x ${draft.image.image.height} px`
@@ -126,6 +130,8 @@ export function HomeContentForm({
       height: result.image.height,
       size: result.image.size,
       contentType: result.image.contentType,
+      originalSize: result.image.originalSize,
+      optimized: result.image.optimized,
     }
 
     if (key === 'hero') {
@@ -165,33 +171,9 @@ export function HomeContentForm({
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    const parsed = homeTextSchema.safeParse({
-      heroAlt: draft.hero.alt,
-      cards: draft.cards.map((card) => ({
-        alt: card.alt,
-        category: card.category,
-        venue: card.venue,
-        topic: card.topic,
-        tag: card.tag,
-      })),
-    })
-
-    const nextTextErrors: Record<string, string> = {}
-    if (!parsed.success) {
-      for (const issue of parsed.error.issues) {
-        nextTextErrors[issue.path.join('.')] = issue.message
-      }
-    }
-
-    const nextImageErrors: Record<string, string> = {}
-    if (draft.hero.image.kind === 'none') {
-      nextImageErrors.hero = 'Choose a hero image.'
-    }
-    draft.cards.forEach((card, index) => {
-      if (card.image.kind === 'none') {
-        nextImageErrors[`card-${index}`] = 'Choose an image for this card.'
-      }
-    })
+    const validation = validateHomeDraft(draft)
+    const nextTextErrors = validation.textErrors
+    const nextImageErrors = validation.imageErrors
 
     setTextErrors(nextTextErrors)
     setImageErrors(nextImageErrors)
@@ -215,7 +197,10 @@ export function HomeContentForm({
       setHeroOpen(true)
     }
 
-    if (!parsed.success || Object.keys(nextImageErrors).length > 0) {
+    if (
+      Object.keys(nextTextErrors).length > 0 ||
+      Object.keys(nextImageErrors).length > 0
+    ) {
       const firstTextPath = Object.keys(nextTextErrors)[0]
       const firstImageKey = Object.keys(nextImageErrors)[0]
 
@@ -232,13 +217,7 @@ export function HomeContentForm({
       return
     }
 
-    onSubmit({
-      hero: { image: draft.hero.image, alt: parsed.data.heroAlt },
-      cards: draft.cards.map((card, index) => ({
-        ...card,
-        ...parsed.data.cards[index],
-      })),
-    })
+    onSubmit(validation.normalized)
   }
 
   const heroMeta = imageMeta(draft.hero)
@@ -249,7 +228,7 @@ export function HomeContentForm({
 
       <CollapsibleSection
         title="Hero image"
-        description="The photograph behind the Home page hero."
+        description="The photograph behind the Home page hero. Leave this section blank to keep the current hero."
         open={heroOpen}
         onToggle={() => setHeroOpen((current) => !current)}
         contentClassName="grid gap-5 px-6 py-5 sm:grid-cols-2"
@@ -257,6 +236,7 @@ export function HomeContentForm({
         <div className="sm:col-span-2">
           <HomeImageField
             id="home-hero-file"
+            kind="hero"
             label="Hero image"
             imageUrl={imageUrlFor(draft.hero.image)}
             meta={heroMeta}
@@ -292,7 +272,8 @@ export function HomeContentForm({
             Featured Engineering Projects
           </h2>
           <p className="mt-1 font-body-md text-body-md text-secondary">
-            Each card is edited independently. Saving writes all three cards together.
+            Fill only the card you want to change. Blank cards keep the public site&apos;s
+            current content; saving writes the whole document atomically.
           </p>
         </div>
 

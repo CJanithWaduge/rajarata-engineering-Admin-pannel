@@ -25,7 +25,11 @@ function imageUrlFor(card: CardDraft): string {
 
 function imageMeta(card: CardDraft): string | null {
   if (card.image.kind === 'new') {
-    return `${card.image.file.name} · ${card.image.width} x ${card.image.height} px · ${formatBytes(card.image.size)}`
+    const optimized =
+      card.image.optimized && card.image.originalSize > card.image.size
+        ? ` · optimized from ${formatBytes(card.image.originalSize)}`
+        : ''
+    return `${card.image.file.name} · ${card.image.width} x ${card.image.height} px · ${formatBytes(card.image.size)}${optimized}`
   }
   if (card.image.kind === 'stored' && card.image.image.width > 0) {
     return `${card.image.image.width} x ${card.image.image.height} px`
@@ -51,7 +55,7 @@ export function FeaturedProjectEditor({
   return (
     <CollapsibleSection
       title={`Card ${index + 1}`}
-      description="Image, category, venue, topic, and tag for this slot."
+      description="Image, category, venue, topic, and tag for this slot. Leave it blank to keep the current card."
       open={open}
       onToggle={onToggle}
       headingLevel={3}
@@ -67,6 +71,7 @@ export function FeaturedProjectEditor({
       <div className="sm:col-span-2">
         <HomeImageField
           id={`home-card-${index}-file`}
+          kind="card"
           label={`Card ${index + 1} image`}
           imageUrl={imageUrlFor(card)}
           meta={imageMeta(card)}

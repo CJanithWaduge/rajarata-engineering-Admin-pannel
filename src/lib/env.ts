@@ -21,6 +21,12 @@ const REQUIRED_ENV_KEYS = [
  */
 const OPTIONAL_ENV_DEFAULTS = {
   VITE_FIREBASE_DATABASE_ID: '(default)',
+  /**
+   * Test-only switch. When `true`, `firebase.ts` points Auth, Firestore, and
+   * Storage at the local emulators instead of production. Never enable this in
+   * a deployed build.
+   */
+  VITE_FIREBASE_USE_EMULATOR: '',
 } as const
 
 export type FirebaseEnvKey = (typeof REQUIRED_ENV_KEYS)[number]
