@@ -33,6 +33,26 @@ export function HomeIcon({ className }: IconProps) {
   )
 }
 
+export function ServicesIcon({ className }: IconProps) {
+  return (
+    <svg {...strokeProps} className={className}>
+      <rect x="3" y="7" width="18" height="13" rx="2" />
+      <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+      <path d="M3 12h18" />
+    </svg>
+  )
+}
+
+export function AboutIcon({ className }: IconProps) {
+  return (
+    <svg {...strokeProps} className={className}>
+      <circle cx="12" cy="12" r="9" />
+      <line x1="12" y1="10.5" x2="12" y2="17" />
+      <circle cx="12" cy="7.25" r="0.9" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
 export function SettingsIcon({ className }: IconProps) {
   return (
     <svg {...strokeProps} className={className}>

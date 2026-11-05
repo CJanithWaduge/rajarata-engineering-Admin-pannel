@@ -1,7 +1,7 @@
 import { TextField } from '../../../components/ui/TextField'
 import { formatBytes } from '../imageValidation'
 import type { CardDraft, CardTextField } from '../types'
-import { CollapsibleSection } from './CollapsibleSection'
+import { CollapsibleSection } from '../../../components/ui/CollapsibleSection'
 import { HomeImageField } from './HomeImageField'
 
 type Props = {

@@ -1,16 +1,16 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Alert } from '../../../components/ui/Alert'
 import { Button } from '../../../components/ui/Button'
+import { CollapsibleSection } from '../../../components/ui/CollapsibleSection'
 import { TextField } from '../../../components/ui/TextField'
+import { UnsavedChangesGuard } from '../../../components/ui/UnsavedChangesGuard'
 import { CARD_COUNT, type ImageKind } from '../constants'
 import { draftFromContent } from '../defaults'
 import { formatBytes, readImageFile } from '../imageValidation'
 import { validateHomeDraft } from '../validation'
 import type { CardTextField, HomeContent, HomeDraft, NewImage } from '../types'
-import { CollapsibleSection } from './CollapsibleSection'
 import { FeaturedProjectEditor } from './FeaturedProjectEditor'
 import { HomeImageField } from './HomeImageField'
-import { UnsavedChangesGuard } from './UnsavedChangesGuard'
 
 type Props = {
   initial: HomeContent | null

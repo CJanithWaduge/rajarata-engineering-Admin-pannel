@@ -64,6 +64,74 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Services page singleton: fixed-count copy and icon slots. The public
+    // site hydrates the prerendered page from this document, so read is public
+    // by design. The top-level key allowlist is deliberate: contact details,
+    // footer copy, images, and SEO fields must never be added here.
+    function isValidServicesContent() {
+      return request.resource.data.keys().hasOnly(
+          ['hero', 'directory', 'services', 'process', 'cta', 'updatedAt', 'updatedBy'])
+        && request.resource.data.hero is map
+        && request.resource.data.hero.quickLinks is list
+        && request.resource.data.hero.quickLinks.size() == 4
+        && request.resource.data.hero.metrics is list
+        && request.resource.data.hero.metrics.size() == 4
+        && request.resource.data.directory is map
+        && request.resource.data.services is list
+        && request.resource.data.services.size() == 8
+        && request.resource.data.process is map
+        && request.resource.data.process.steps is list
+        && request.resource.data.process.steps.size() == 6
+        && request.resource.data.cta is map
+        && request.resource.data.cta.points is list
+        && request.resource.data.cta.points.size() == 2
+        && request.resource.data.updatedAt is timestamp
+        && request.resource.data.updatedBy is string;
+    }
+
+    match /site/services {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidServicesContent();
+      allow delete: if isAdmin();
+    }
+
+    // About page singleton: one hero image, story, vision/mission, pillars,
+    // methodology, industries, and CTA copy. The public site hydrates the About
+    // page from this document once its reader is wired in, so read is public by
+    // design. Contact details, footer copy, and SEO stay out of this document.
+    function isValidAboutContent() {
+      return request.resource.data.keys().hasOnly(
+          ['hero', 'heritage', 'visionMission', 'pillars', 'methodology',
+            'industries', 'cta', 'updatedAt', 'updatedBy'])
+        && request.resource.data.hero is map
+        && request.resource.data.hero.image is map
+        && request.resource.data.hero.image.imageUrl is string
+        && request.resource.data.hero.snapshots is list
+        && request.resource.data.hero.snapshots.size() == 3
+        && request.resource.data.heritage is map
+        && request.resource.data.heritage.milestones is list
+        && request.resource.data.heritage.milestones.size() == 4
+        && request.resource.data.visionMission is map
+        && request.resource.data.pillars is map
+        && request.resource.data.pillars.items is list
+        && request.resource.data.pillars.items.size() == 5
+        && request.resource.data.methodology is map
+        && request.resource.data.methodology.steps is list
+        && request.resource.data.methodology.steps.size() == 5
+        && request.resource.data.industries is map
+        && request.resource.data.industries.sectors is list
+        && request.resource.data.industries.sectors.size() == 6
+        && request.resource.data.cta is map
+        && request.resource.data.updatedAt is timestamp
+        && request.resource.data.updatedBy is string;
+    }
+
+    match /site/about {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidAboutContent();
+      allow delete: if isAdmin();
+    }
+
     // Any other content collection is added explicitly in a later phase.
     match /{document=**} {
       allow read, write: if false;

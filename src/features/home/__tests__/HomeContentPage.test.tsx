@@ -34,7 +34,7 @@ vi.mock('../../auth/useAuth', () => ({
   }),
 }))
 
-vi.mock('../components/UnsavedChangesGuard', () => ({
+vi.mock('../../../components/ui/UnsavedChangesGuard', () => ({
   UnsavedChangesGuard: () => null,
 }))
 

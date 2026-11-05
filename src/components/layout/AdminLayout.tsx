@@ -5,6 +5,7 @@ import { ROUTES } from '../../routes/paths'
 import { BrandLogo } from '../brand/BrandLogo'
 import { Button } from '../ui/Button'
 import {
+  AboutIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   CloseIcon,
@@ -12,6 +13,7 @@ import {
   HomeIcon,
   LogoutIcon,
   MenuIcon,
+  ServicesIcon,
   SettingsIcon,
 } from './icons'
 
@@ -20,6 +22,8 @@ const SIDEBAR_STORAGE_KEY = 'rajarata-admin.sidebar-collapsed'
 const NAV_ITEMS = [
   { to: ROUTES.dashboard, label: 'Dashboard', icon: DashboardIcon, end: true },
   { to: ROUTES.home, label: 'Home Page', icon: HomeIcon, end: false },
+  { to: ROUTES.services, label: 'Services Page', icon: ServicesIcon, end: false },
+  { to: ROUTES.about, label: 'About Us Page', icon: AboutIcon, end: false },
   { to: ROUTES.settings, label: 'Site Settings', icon: SettingsIcon, end: false },
 ] as const
 

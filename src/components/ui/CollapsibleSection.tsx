@@ -1,5 +1,5 @@
 import { useId, type ReactNode } from 'react'
-import { ChevronDownIcon } from '../../../components/layout/icons'
+import { ChevronDownIcon } from '../layout/icons'
 
 type Props = {
   title: string

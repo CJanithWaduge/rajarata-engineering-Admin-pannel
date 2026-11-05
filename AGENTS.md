@@ -3,16 +3,18 @@
 ## Current state
 
 - Vite 8 + React 19 + TypeScript 7 + Tailwind 4 admin panel, scaffolded from `create-vite` `react-ts` and linted with **oxlint** (not ESLint).
-- Phase 1 (login, admin authorization, route guards), Phase 2 (`site/settings`), and Phase 3 (`site/home` + Home image storage) are implemented. `/dashboard` is still a placeholder.
-- Home images currently use the **inline-media fallback**: compressed raster images are stored as `data:image/...;base64,...` URLs inside `site/home`, because the Firebase project is on Spark and has no Storage bucket. Inline mode is the default; set `VITE_FIREBASE_INLINE_MEDIA=false` to use the Storage pipeline once a bucket exists.
+- Phase 1 (login, admin authorization, route guards), Phase 2 (`site/settings`), Phase 3 (`site/home` + Home image storage), Phase 4 (`site/services` + public Services hydration), and Phase 5 (`site/about` + About hero image) are implemented in code. `/dashboard` is still a placeholder.
+- Home and About images currently use the **inline-media fallback**: compressed raster images are stored as `data:image/...;base64,...` URLs inside `site/home` and `site/about`, because the Firebase project is on Spark and has no Storage bucket. Inline mode is the default; set `VITE_FIREBASE_INLINE_MEDIA=false` to use the Storage pipeline once a bucket exists.
 - `main` has no commits yet. Verify work against files, not git history.
-- The content schema is locked for the two implemented singletons: `site/settings` and `site/home`. `admins/{uid|email}` is the admin allowlist. Do not invent collection names or field shapes for later phases.
+- The content schema is locked for the four implemented singletons: `site/settings`, `site/home`, `site/services`, and `site/about`. `admins/{uid|email}` is the admin allowlist. Do not invent collection names or field shapes for later phases.
+- `site/services` is one page-level document: fixed counts of 8 services, 4 quick links, 4 metrics, 6 process steps, 2 CTA points, and 4 suitable-for chips per service. Numbers, anchors, accents, and emphasis are derived from slot order, not stored. Contact details, footer copy, images, and SEO stay outside this document.
 - `site/home` always stores a `hero` map and exactly three `featuredProjects` slots, but a slot may be blank. A blank slot is an empty map, not seeded content; the public site keeps its build-time hero/card for it. A started section must be complete (image + required text).
+- `site/about` is one page-level document: one hero image plus fixed counts of 3 snapshots, 4 milestones, 5 pillars, 5 method steps, and 6 sectors. Milestone accents, pillar/method numbering, and card order are derived from slot order. Icons come from the `ABOUT_ICONS` allowlist. **Every field is optional**: a blank string, a blank icon, or an unchanged/cleared hero image is stored as an empty value and means "keep the public page's build-time content for that slot". Fixed array counts and the top-level keys are still enforced. Hero alt text is required only when an admin-supplied hero image is present. “Based In” plus the CTA phone/WhatsApp actions remain owned by `site/settings`; contact details, footer, header/nav, images beyond the hero, and SEO stay outside this document. The public About page now hydrates from this document through the `data-about-*` hooks in the public site repo (`src/lib/aboutContentParser.ts`, `src/lib/aboutContent.ts`, `src/lib/watchAboutContent.ts`, and the `data-about-*` attributes on the About components), so an admin save reaches the public page on reload.
 
 ## Product and stack
 
 - React + Vite + Tailwind admin panel for the Rajarata Engineering public website.
-- Firebase Authentication (admin login), Firestore (all dynamic site content, including inline Home media), Firebase Storage (optional Home media when a bucket is provisioned).
+- Firebase Authentication (admin login), Firestore (all dynamic site content, including inline Home/About media), Firebase Storage (optional Home/About media when a bucket is provisioned).
 - This repo is the admin/CRUD surface only. The public website is separate and reads the same Firestore data.
 
 ## UI theme (mirrors the public site)
@@ -36,7 +38,7 @@
 
 ## Firebase and auth conventions
 
-- `src/lib/firebase.ts` is the only module that calls `initializeApp`, `getAuth`, `getFirestore`, or `getStorage`; it exports `app`, `auth`, `db`, `storage`. Storage uploads live behind `src/features/home/storageService.ts`; inline conversion lives behind `src/features/home/inlineMedia.ts`. Do not call `firebase/storage` from components.
+- `src/lib/firebase.ts` is the only module that calls `initializeApp`, `getAuth`, `getFirestore`, or `getStorage`; it exports `app`, `auth`, `db`, `storage`. The validated Storage upload/delete engine lives in `src/lib/media/storage.ts`; Home (`src/features/home/storageService.ts`) and About (`src/features/about/media.ts`) delegate to it. Inline conversion lives behind `src/features/home/inlineMedia.ts`. Do not call `firebase/storage` from components.
 - Login is email/password only. `signInAdmin` in `src/features/auth/authService.ts` performs the credential sign-in **and** verifies the account is provisioned as an admin; otherwise it signs out and throws a `not-admin` error.
 - An admin record can be keyed two ways, and both are supported deliberately:
   - `admins/{uid}` — canonical, revocation-friendly (delete/deactivate the doc).
@@ -45,9 +47,9 @@
 - Any authenticated Firebase user is **not** automatically an admin. Admin docs are provisioned manually in Firebase Console (or the Admin SDK); the client never writes `admins/*`.
 - Auth state lives in `AuthProvider` (single `onAuthStateChanged` subscription) and is consumed via `useAuth()`. Do not call `firebase/auth` from components.
 - `RequireAdmin` and `GuestOnly` are route-level guards. Guarding is UX only — `firestore.rules` is the security boundary.
-- Firestore rules are default-deny: `admins/{uid|email}` (self-read), `site/settings` (public read, admin write), and `site/home` (public read, admin write) are the allowed paths today. `storage.rules` allows public reads of `home/hero/*` and `home/projects/*`, with admin-only writes capped at 5 MB and 3 MB respectively. Every new content path needs an explicit rule; otherwise the feature is not done.
-- Media flow (implemented for Home): validate in the browser → optimize oversized files with the Canvas API (source caps 25 MB / 60 MP; no new dependency) → revalidate the optimized file → then either upload to Storage (`getDownloadURL()`, save URL/path/metadata) or, unless `VITE_FIREBASE_INLINE_MEDIA=false`, encode the compressed file as a raster data URL and save it in `site/home`. Delete replaced Storage objects and roll back new uploads if the document write fails.
-- Inline mode is a deliberate Spark-plan fallback, not a general-purpose image CDN. Limits: hero ≤ 160 KB, fitted up to 1600×1200; each card ≤ 90 KB, fitted up to 1200×900; and all four encoded URLs together must stay under `INLINE_MEDIA_DOC_BUDGET` (900,000 characters) so the document stays below Firestore's 1 MiB limit. Compression tries progressively lower qualities; if it cannot meet the cap, the save fails instead of silently writing an oversized doc.
+- Firestore rules are default-deny: `admins/{uid|email}` (self-read), `site/settings` (public read, admin write), `site/home` (public read, admin write), `site/services` (public read, admin write with fixed-count and top-level key checks), and `site/about` (public read, admin write with fixed-count and top-level key checks) are the allowed paths today. `storage.rules` allows public reads of `home/hero/*`, `home/projects/*`, and `about/hero/*`, with admin-only writes capped at 5 MB, 3 MB, and 5 MB respectively. Every new content path needs an explicit rule; otherwise the feature is not done.
+- Media flow (implemented for Home and About): validate in the browser → optimize oversized files with the Canvas API (source caps 25 MB / 60 MP; no new dependency) → revalidate the optimized file → then either upload to Storage (`getDownloadURL()`, save URL/path/metadata) or, unless `VITE_FIREBASE_INLINE_MEDIA=false`, encode the compressed file as a raster data URL and save it in `site/home` / `site/about`. Delete replaced Storage objects and roll back new uploads if the document write fails.
+- Inline mode is a deliberate Spark-plan fallback, not a general-purpose image CDN. Limits: hero ≤ 160 KB, fitted up to 1600×1200; each card ≤ 90 KB, fitted up to 1200×900; and all four encoded URLs together must stay under `INLINE_MEDIA_DOC_BUDGET` (900,000 characters) so the document stays below Firestore's 1 MiB limit. The About hero reuses the hero caps and the single encoded URL must stay under `ABOUT_INLINE_MEDIA_DOC_BUDGET` (900,000 characters). Compression tries progressively lower qualities; if it cannot meet the cap, the save fails instead of silently writing an oversized doc.
 - The public site accepts `https:` image URLs and raster `data:image/{jpeg,png,webp};base64,...` URLs. It must keep rejecting `data:image/svg+xml` and every other scheme.
 - Save feedback must be immediate: disable the submit control while writing and show success/error feedback after the write settles.
 
@@ -68,10 +70,12 @@
 
 ## Code layout
 
-- `src/lib/` — `env.ts` (validates the required `VITE_FIREBASE_*` keys, fails fast, defaults the optional `VITE_FIREBASE_DATABASE_ID`) and `firebase.ts`.
+- `src/lib/` — `env.ts` (validates the required `VITE_FIREBASE_*` keys, fails fast, defaults the optional `VITE_FIREBASE_DATABASE_ID`), `firebase.ts`, and `media/storage.ts` (shared validated-image upload/delete engine).
 - `src/features/auth/` — `types.ts`, `errors.ts`, `schema.ts`, `authService.ts`, `context.ts`, `AuthProvider.tsx`, `useAuth.ts`, `components/`, `pages/`, `guards/`.
-- `src/features/home/` — `constants.ts` (Storage and inline image limits), `mediaMode.ts` (`VITE_FIREBASE_INLINE_MEDIA`), `inlineMedia.ts` (FileReader → data URL), `homeContentService.ts`, `storageService.ts`, validation/compression modules, `components/`, `pages/`.
-- `src/components/ui/` — domain-agnostic form/UI primitives reused by all later CRUD forms (`Button`, `TextField`, `PasswordField`, `Alert`, `Toast`, `FullPageSpinner`).
+- `src/features/home/` — `constants.ts` (Storage and inline image limits), `mediaMode.ts` (`VITE_FIREBASE_INLINE_MEDIA`), `inlineMedia.ts` (FileReader → data URL), `homeContentService.ts`, `storageService.ts` (delegates to `src/lib/media/storage.ts`), validation/compression modules, `components/`, `pages/`.
+- `src/features/services/` — `constants.ts` (fixed counts, text limits, icon/anchor allowlists), `types.ts`, `schema.ts` (whole-page zod schema), `defaults.ts` (empty form state only, no site copy), `errors.ts`, `servicesContentService.ts`, `useServicesContent.ts`, `components/`, `pages/ServicesContentPage.tsx`.
+- `src/features/about/` — `constants.ts` (fixed counts, text limits, `ABOUT_ICONS`, `aboutTextHint`), `types.ts`, `schema.ts` (optional-text form schema + strict stored-document schema), `defaults.ts` (empty form state only, no site copy), `errors.ts`, `media.ts` (Home image gate → About Storage folder or inline data URL), `aboutContentService.ts`, `useAboutContent.ts`, `components/`, `pages/AboutContentPage.tsx`.
+- `src/components/ui/` — domain-agnostic form/UI primitives reused by all CRUD forms (`Button`, `TextField`, `PasswordField`, `TextArea`, `SelectField`, `Alert`, `Toast`, `CollapsibleSection`, `UnsavedChangesGuard`, `FullPageSpinner`).
 - `src/components/brand/BrandLogo.tsx` — brand mark mirrored from the public site.
 - `src/components/layout/AdminLayout.tsx` — protected shell: fixed sidebar navigation with a persisted collapse-to-icon-rail state (`localStorage` key `rajarata-admin.sidebar-collapsed`), an off-canvas drawer below `lg`, and sign-out in the sidebar footer. Icons live in `src/components/layout/icons.tsx` (inline SVG, no icon dependency).
 - `src/routes/` — `paths.ts`, `redirect.ts` (same-origin redirect validation), `router.tsx`.
@@ -98,8 +102,8 @@ Run from the repo root with npm (a `package-lock.json` exists; do not switch pac
 - Globals are **off**: import `describe`, `it`, `expect`, `vi` from `vitest` explicitly.
 - Unit tests never hit Firebase. Mock the service boundary (`../authService`) or `firebase/*` modules with `vi.mock` + `vi.hoisted`; stub env with `vi.stubEnv` + `vi.resetModules` for `src/lib/env.ts`.
 - Emulator tests are the exception: they import the real `src/lib/firebase.ts` after stubbing env and set `VITE_FIREBASE_USE_EMULATOR=true`, which makes `firebase.ts` connect to ports 9099/8080/9199 from `firebase.json`. They seed `admins/{uid}` through the Firestore REST API with `Authorization: Bearer owner` (client writes to `admins/*` are denied by design), then exercise real rules. They are excluded from `test:run`; run them with `npm run test:emulator`.
-- Unit tests force `VITE_FIREBASE_INLINE_MEDIA=false` in `src/test/setup.ts` so Storage-path tests are deterministic; the inline test file stubs it to `true` before importing the service. `home.emulator.test.ts` also forces inline mode off because it covers the Storage path. Do not rely on the developer's `.env` for either mode.
-- Do not add tests that require a live Firebase project; the manual cases in `IMPLIMENTAION.md` cover real-network behavior, including HOME-022 (public hydration) and HOME-023 (Storage upload on Spark).
+- Unit tests force `VITE_FIREBASE_INLINE_MEDIA=false` in `src/test/setup.ts` so Storage-path tests are deterministic; the inline test file stubs it to `true` before importing the service. `home.emulator.test.ts` and `about.emulator.test.ts` also force inline mode off because they cover the Storage path. Do not rely on the developer's `.env` for either mode.
+- Do not add tests that require a live Firebase project; the manual cases in `IMPLIMENTAION.md` cover real-network behavior, including HOME-022 (public hydration), HOME-023 (Storage upload on Spark), and ABOUT-020 (public hydration once the reader exists).
 
 ## Toolchain quirks
 
@@ -113,6 +117,6 @@ Run from the repo root with npm (a `package-lock.json` exists; do not switch pac
 - Confirm no site content, contact details, or media URLs were hardcoded.
 - Confirm `.env` was not modified into source, printed, or staged, and no service-account key was added.
 - Confirm new Firestore/Storage paths have matching rules; otherwise the feature is not done.
-- Confirm inline media is intentional: it is the default unless `VITE_FIREBASE_INLINE_MEDIA=false`; keep each image under its inline cap and the combined encoded URLs under `INLINE_MEDIA_DOC_BUDGET`.
+- Confirm inline media is intentional: it is the default unless `VITE_FIREBASE_INLINE_MEDIA=false`; keep each image under its inline cap, the combined Home encoded URLs under `INLINE_MEDIA_DOC_BUDGET`, and the About hero under `ABOUT_INLINE_MEDIA_DOC_BUDGET`.
 - Run `npm run lint`, `npm run test:run`, and `npm run build`.
 - Update this file when commands, folder conventions, or schema decisions change.
