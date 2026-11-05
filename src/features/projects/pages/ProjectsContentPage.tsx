@@ -4,7 +4,7 @@ import { FullPageSpinner } from '../../../components/ui/FullPageSpinner'
 import { Toast } from '../../../components/ui/Toast'
 import { useAuth } from '../../auth/useAuth'
 import { ProjectsContentForm } from '../components/ProjectsContentForm'
-import type { ProjectsFormValues } from '../types'
+import type { ProjectsDraft } from '../types'
 import { useProjectsContent } from '../useProjectsContent'
 
 export function ProjectsContentPage() {
@@ -17,11 +17,11 @@ export function ProjectsContentPage() {
     return <FullPageSpinner />
   }
 
-  const handleSave = async (values: ProjectsFormValues) => {
+  const handleSave = async (values: ProjectsDraft) => {
     if (!admin) return
     setSuccess(null)
     setSaveError(null)
-    const result = await save(values, admin.uid)
+    const result = await save(values, admin.uid, content)
     if (result) {
       setSaveError(result.message)
     } else {

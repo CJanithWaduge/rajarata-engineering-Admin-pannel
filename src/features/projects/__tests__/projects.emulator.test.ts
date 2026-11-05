@@ -6,7 +6,8 @@ import {
 } from 'firebase/auth'
 import { deleteDoc, doc, serverTimestamp, setDoc } from 'firebase/firestore'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { ProjectsFormValues } from '../types'
+import { ref, uploadBytes } from 'firebase/storage'
+import type { ProjectNewImage, ProjectsDraft } from '../types'
 
 /**
  * End-to-end Projects CRUD against the Firebase emulators: real Auth,
@@ -59,12 +60,67 @@ async function seedAdmin(adminUid: string): Promise<void> {
   }
 }
 
-function payload(values: ProjectsFormValues) {
+function payload(draft: ProjectsDraft) {
+  // Mirror the document shape the admin client writes: per-project text
+  // without the `alt` field, one `image` object per slot, no `images` key.
+  const projects = draft.portfolio.projects.map((project) => {
+    const { alt: _alt, ...text } = project
+
+    return {
+      ...text,
+      image: {
+        imageUrl: '',
+        imagePath: '',
+        imageAlt: '',
+        imageWidth: 0,
+        imageHeight: 0,
+        imageSize: 0,
+        imageContentType: '',
+      },
+    }
+  })
+
   return {
-    ...values,
+    hero: draft.hero,
+    portfolio: { projects },
+    trackRecord: draft.trackRecord,
+    cta: draft.cta,
     updatedAt: serverTimestamp(),
     updatedBy: uid,
   }
+}
+
+function jpegFile(label: string): File {
+  return new File(
+    [new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46])],
+    `${label}.jpg`,
+    { type: 'image/jpeg' },
+  )
+}
+
+function newImage(label: string): ProjectNewImage {
+  const file = jpegFile(label)
+
+  return {
+    kind: 'new',
+    file,
+    previewUrl: `blob:${label}`,
+    width: 1600,
+    height: 1000,
+    size: file.size,
+    contentType: 'image/jpeg',
+    originalSize: file.size,
+    optimized: false,
+  }
+}
+
+function draftWithImage(label: string): ProjectsDraft {
+  const draft = testData.validDraft()
+  draft.images = draft.images.map((_, index) =>
+    index === 0 ? newImage(label) : { kind: 'none' },
+  )
+  draft.portfolio.projects[0]!.alt = `${label} alt text`
+  return draft
 }
 
 beforeAll(async () => {
@@ -106,9 +162,9 @@ describe('projects CRUD against the Firebase emulators', () => {
   })
 
   it('saves and reads the whole document', async () => {
-    const values = testData.validValues()
-    values.hero.title = 'Emulator Projects Title'
-    const saved = await service.saveProjectsContent(values, uid)
+    const draft = testData.validDraft()
+    draft.hero.title = 'Emulator Projects Title'
+    const saved = await service.saveProjectsContent(draft, uid, null)
 
     expect(saved.hero.title).toBe('Emulator Projects Title')
     expect(saved.updatedBy).toBe(uid)
@@ -122,20 +178,81 @@ describe('projects CRUD against the Firebase emulators', () => {
     expect(stored.content?.updatedBy).toBe(uid)
   })
 
-  it('replaces the document on a second save', async () => {
-    const first = testData.validValues()
-    await service.saveProjectsContent(first, uid)
+  it('saves a document that keeps the six images empty (public artwork stays)', async () => {
+    const draft = testData.validDraft()
+    await service.saveProjectsContent(draft, uid, null)
 
-    const second = testData.validValues()
+    const stored = await service.getProjectsContent()
+
+    expect(stored.exists).toBe(true)
+    stored.content?.portfolio.projects.forEach((project) => {
+      expect(project.image.url).toBe('')
+      expect(project.alt).toBe('')
+    })
+  })
+
+  it('uploads a card image and reads the same file back from Storage', async () => {
+    const saved = await service.saveProjectsContent(
+      draftWithImage('card-one'),
+      uid,
+      null,
+    )
+
+    expect(saved.portfolio.projects[0]?.image.path).toMatch(/^projects\/cards\/1\//)
+    expect(saved.portfolio.projects[0]?.image.url).toContain('127.0.0.1:9199')
+
+    const response = await fetch(saved.portfolio.projects[0]?.image.url ?? '')
+    expect(response.status).toBe(200)
+
+    const stored = await service.getProjectsContent()
+    expect(stored.content?.portfolio.projects[0]?.image.url).toBe(
+      saved.portfolio.projects[0]?.image.url,
+    )
+    expect(stored.content?.portfolio.projects[0]?.image.alt).toBe(
+      'card-one alt text',
+    )
+    expect(stored.content?.portfolio.projects[1]?.image.url).toBe('')
+  })
+
+  it('deletes the replaced card image object after a second save', async () => {
+    const first = await service.saveProjectsContent(
+      draftWithImage('card-one'),
+      uid,
+      null,
+    )
+    const replaced = first.portfolio.projects[0]?.image
+    expect((await fetch(replaced?.url ?? '')).status).toBe(200)
+
+    const second = await service.saveProjectsContent(
+      draftWithImage('card-two'),
+      uid,
+      first,
+    )
+
+    expect(second.portfolio.projects[0]?.image.path).not.toBe(replaced?.path)
+    expect((await fetch(replaced?.url ?? '')).status).toBe(404)
+
+    const stored = await service.getProjectsContent()
+    expect(stored.content?.portfolio.projects[0]?.image.path).toBe(
+      second.portfolio.projects[0]?.image.path,
+    )
+  })
+
+  it('replaces the document on a second save', async () => {
+    const first = testData.validDraft()
+    await service.saveProjectsContent(first, uid, null)
+
+    const second = testData.validDraft()
     second.cta.title = 'Updated CTA title'
-    await service.saveProjectsContent(second, uid)
+    const previous = (await service.getProjectsContent()).content
+    await service.saveProjectsContent(second, uid, previous)
 
     const stored = await service.getProjectsContent()
     expect(stored.content?.cta.title).toBe('Updated CTA title')
   })
 
   it('deletes the projects document', async () => {
-    await service.saveProjectsContent(testData.validValues(), uid)
+    await service.saveProjectsContent(testData.validDraft(), uid, null)
     await deleteDoc(doc(firebase.db, 'site', 'projects'))
 
     await expect(service.getProjectsContent()).resolves.toEqual({
@@ -145,14 +262,14 @@ describe('projects CRUD against the Firebase emulators', () => {
   })
 
   it('allows public reads but rejects anonymous writes', async () => {
-    await service.saveProjectsContent(testData.validValues(), uid)
+    await service.saveProjectsContent(testData.validDraft(), uid, null)
     await signOut(firebase.auth)
 
     const publicRead = await service.getProjectsContent()
     expect(publicRead.exists).toBe(true)
 
     await expect(
-      setDoc(doc(firebase.db, 'site', 'projects'), payload(testData.validValues())),
+      setDoc(doc(firebase.db, 'site', 'projects'), payload(testData.validDraft())),
     ).rejects.toMatchObject({ code: 'permission-denied' })
 
     await signInWithEmailAndPassword(firebase.auth, ADMIN_EMAIL, PASSWORD)
@@ -170,7 +287,7 @@ describe('projects CRUD against the Firebase emulators', () => {
     }
 
     await expect(
-      setDoc(doc(firebase.db, 'site', 'projects'), payload(testData.validValues())),
+      setDoc(doc(firebase.db, 'site', 'projects'), payload(testData.validDraft())),
     ).rejects.toMatchObject({ code: 'permission-denied' })
 
     await signInWithEmailAndPassword(firebase.auth, ADMIN_EMAIL, PASSWORD)
@@ -179,18 +296,32 @@ describe('projects CRUD against the Firebase emulators', () => {
   it('rejects a top-level contact or footer key', async () => {
     await expect(
       setDoc(doc(firebase.db, 'site', 'projects'), {
-        ...payload(testData.validValues()),
+        ...payload(testData.validDraft()),
         phone: '+94 25 000 0000',
       }),
     ).rejects.toMatchObject({ code: 'permission-denied' })
   })
 
-  it('rejects the wrong fixed counts', async () => {
-    const values = testData.validValues()
-    values.portfolio.projects = values.portfolio.projects.slice(0, 5)
+  it('rejects anonymous Storage writes to the projects/cards path', async () => {
+    await signOut(firebase.auth)
 
     await expect(
-      setDoc(doc(firebase.db, 'site', 'projects'), payload(values)),
+      uploadBytes(
+        ref(firebase.storage, `projects/cards/1/${Date.now()}-anonymous.jpg`),
+        jpegFile('anonymous'),
+        { contentType: 'image/jpeg' },
+      ),
+    ).rejects.toMatchObject({ code: 'storage/unauthorized' })
+
+    await signInWithEmailAndPassword(firebase.auth, ADMIN_EMAIL, PASSWORD)
+  })
+
+  it('rejects the wrong fixed counts', async () => {
+    const draft = testData.validDraft()
+    draft.portfolio.projects = draft.portfolio.projects.slice(0, 5)
+
+    await expect(
+      setDoc(doc(firebase.db, 'site', 'projects'), payload(draft)),
     ).rejects.toMatchObject({ code: 'permission-denied' })
   })
 })

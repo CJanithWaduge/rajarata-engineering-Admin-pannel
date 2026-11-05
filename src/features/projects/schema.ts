@@ -31,6 +31,7 @@ const projectSchema = z.object({
   specLabel: optionalText('Scope label', PROJECT_TEXT_LIMITS.projectSpecLabel),
   specValue: optionalText('Scope value', PROJECT_TEXT_LIMITS.projectSpecValue),
   specDetail: optionalText('Scope detail', PROJECT_TEXT_LIMITS.projectSpecDetail),
+  alt: optionalText('Card image alt text', PROJECT_TEXT_LIMITS.projectImageAlt),
 })
 
 const trackRecordColumnSchema = z.object({
@@ -67,3 +68,78 @@ export const projectsFormSchema = z.object({
     body: optionalText('CTA body', PROJECT_TEXT_LIMITS.ctaBody),
   }),
 }) satisfies z.ZodType<ProjectsFormValues, ProjectsFormValues>
+
+const emptyStoredImage = {
+  imageUrl: '',
+  imagePath: '',
+  imageAlt: '',
+  imageWidth: 0,
+  imageHeight: 0,
+  imageSize: 0,
+  imageContentType: '',
+}
+
+/**
+ * An empty image URL means "keep the public page image". If an image is
+ * present, its alt text cannot be blank, because the public page has no
+ * matching fallback for an admin-supplied image.
+ */
+const storedImageSchema = z
+  .object({
+    imageUrl: z.string().default(''),
+    imagePath: z.string().default(''),
+    imageAlt: optionalText(
+      'Card image alt text',
+      PROJECT_TEXT_LIMITS.projectImageAlt,
+    ),
+    imageWidth: z.number().nonnegative().default(0),
+    imageHeight: z.number().nonnegative().default(0),
+    imageSize: z.number().nonnegative().default(0),
+    imageContentType: z.string().default(''),
+  })
+  .superRefine((image, ctx) => {
+    if (image.imageUrl.trim() !== '' && image.imageAlt.trim() === '') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['imageAlt'],
+        message: 'Card image alt text is required when an image is set.',
+      })
+    }
+  })
+
+/**
+ * Stored-document schema. A missing image object (documents written before the
+ * image fields existed) is accepted and kept as "empty", which means the
+ * public page keeps its build-time image for that slot.
+ */
+const storedProjectSchema = projectSchema
+  .omit({ alt: true })
+  .extend({
+    image: storedImageSchema.default(emptyStoredImage),
+  })
+
+export const projectsContentSchema = z.object({
+  hero: z.object({
+    eyebrow: optionalText('Hero eyebrow', PROJECT_TEXT_LIMITS.heroEyebrow),
+    title: optionalText('Hero title', PROJECT_TEXT_LIMITS.heroTitle),
+    intro: optionalText('Hero intro', PROJECT_TEXT_LIMITS.heroIntro),
+  }),
+  portfolio: z.object({
+    projects: z
+      .array(storedProjectSchema)
+      .length(PROJECT_COUNT, `Exactly ${PROJECT_COUNT} projects are required.`),
+  }),
+  trackRecord: z.object({
+    columns: z
+      .array(trackRecordColumnSchema)
+      .length(
+        TRACK_RECORD_COUNT,
+        `Exactly ${TRACK_RECORD_COUNT} track-record columns are required.`,
+      ),
+  }),
+  cta: z.object({
+    eyebrow: optionalText('CTA eyebrow', PROJECT_TEXT_LIMITS.ctaEyebrow),
+    title: optionalText('CTA title', PROJECT_TEXT_LIMITS.ctaTitle),
+    body: optionalText('CTA body', PROJECT_TEXT_LIMITS.ctaBody),
+  }),
+})

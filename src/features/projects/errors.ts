@@ -17,6 +17,7 @@ const messages: Record<ProjectsErrorCode, string> = {
     'Firestore is not set up for this project; the projects page content could not be reached.',
   network: 'Network error. Check your connection and try again.',
   validation: 'Some projects page values are invalid. Check the fields below.',
+  upload: 'The image could not be prepared or uploaded. Check your connection and try again.',
   'invalid-document':
     'The stored projects page content is incomplete or invalid. Repair it in Firestore before editing here.',
   unknown: 'Could not save the projects page content. Please try again.',

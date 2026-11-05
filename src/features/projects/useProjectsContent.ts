@@ -3,7 +3,7 @@ import { getProjectsContent, saveProjectsContent } from './projectsContentServic
 import { ProjectsError } from './errors'
 import type {
   ProjectsContent,
-  ProjectsFormValues,
+  ProjectsDraft,
   ProjectsStatus,
 } from './types'
 
@@ -16,8 +16,9 @@ export type UseProjectsContentResult = {
   version: number
   reload: () => Promise<void>
   save: (
-    values: ProjectsFormValues,
+    values: ProjectsDraft,
     uid: string,
+    previous: ProjectsContent | null,
   ) => Promise<null | ProjectsError>
 }
 
@@ -48,7 +49,11 @@ export function useProjectsContent(): UseProjectsContentResult {
     }
   }
 
-  const save = async (values: ProjectsFormValues, uid: string) => {
+  const save = async (
+    values: ProjectsDraft,
+    uid: string,
+    previous: ProjectsContent | null,
+  ) => {
     // The button is disabled while saving, but a double-click can land before
     // the isSaving prop re-renders. This ref closes that window synchronously.
     if (savingRef.current) {
@@ -60,7 +65,7 @@ export function useProjectsContent(): UseProjectsContentResult {
     setError(null)
 
     try {
-      const saved = await saveProjectsContent(values, uid)
+      const saved = await saveProjectsContent(values, uid, previous)
       setContent(saved)
       setExists(true)
       setVersion((current) => current + 1)

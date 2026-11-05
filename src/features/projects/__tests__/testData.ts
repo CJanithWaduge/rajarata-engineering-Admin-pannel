@@ -4,7 +4,11 @@ import {
   TRACK_RECORD_COUNT,
 } from '../constants'
 import { createEmptyProjectsValues } from '../defaults'
-import type { ProjectsContent, ProjectsFormValues } from '../types'
+import type {
+  ProjectsContent,
+  ProjectsDraft,
+  ProjectsFormValues,
+} from '../types'
 
 function category(index: number) {
   return PROJECT_CATEGORIES[index % PROJECT_CATEGORIES.length] ?? PROJECT_CATEGORIES[0]
@@ -33,6 +37,7 @@ export function validValues(): ProjectsFormValues {
       specLabel: `Spec label ${index + 1}`,
       specValue: `Spec value ${index + 1}`,
       specDetail: `Spec detail ${index + 1}`,
+      alt: `Card image alt ${index + 1}`,
     })),
   }
 
@@ -53,9 +58,68 @@ export function validValues(): ProjectsFormValues {
   return values
 }
 
-export function validContent(): ProjectsContent {
+/**
+ * Raw document as stored in Firestore: per-project text without `alt`, one
+ * prefixed image object per slot — matches what the admin client writes and
+ * what the emulator reads back.
+ */
+export function validStoredDocument() {
+  const values = validValues()
+
+  return {
+    hero: values.hero,
+    portfolio: {
+      projects: values.portfolio.projects.map((project, index) => {
+        const { alt: _alt, ...text } = project
+
+        return {
+          ...text,
+          image: {
+            imageUrl: `https://cdn.example.test/projects/card-${index + 1}.webp`,
+            imagePath: `projects/cards/${index + 1}/card.webp`,
+            imageAlt: `Card image alt ${index + 1}`,
+            imageWidth: 1600,
+            imageHeight: 1000,
+            imageSize: 120_000,
+            imageContentType: 'image/webp',
+          },
+        }
+      }),
+    },
+    trackRecord: values.trackRecord,
+    cta: values.cta,
+    updatedBy: 'uid-2',
+  }
+}
+
+export function validDraft(): ProjectsDraft {
   return {
     ...validValues(),
+    images: Array.from({ length: PROJECT_COUNT }, () => ({
+      kind: 'none' as const,
+    })),
+  }
+}
+
+export function validContent(): ProjectsContent {
+  const values = validValues()
+
+  return {
+    ...values,
+    portfolio: {
+      projects: values.portfolio.projects.map((project, index) => ({
+        ...project,
+        image: {
+          url: `https://cdn.example.test/projects/card-${index + 1}.webp`,
+          path: `projects/cards/${index + 1}/card.webp`,
+          alt: project.alt,
+          width: 1600,
+          height: 1000,
+          size: 120_000,
+          contentType: 'image/webp',
+        },
+      })),
+    },
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedBy: 'uid-1',
   }

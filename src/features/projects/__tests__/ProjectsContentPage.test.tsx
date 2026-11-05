@@ -118,6 +118,7 @@ describe('ProjectsContentPage', () => {
         hero: expect.objectContaining({ title: 'Changed hero title' }),
       }),
       'uid-1',
+      expect.anything(),
     )
     expect(await screen.findByText('Successfully saved changes')).toBeInTheDocument()
   })

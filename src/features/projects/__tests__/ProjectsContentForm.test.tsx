@@ -34,8 +34,11 @@ describe('ProjectsContentForm', { timeout: 20_000 }, () => {
     vi.clearAllMocks()
   })
 
-  it('starts clean with Save disabled and no contact fields', { timeout: 20_000 }, () => {
+  it('starts clean with Save disabled and no contact fields', { timeout: 20_000 }, async () => {
+    const user = userEvent.setup()
     renderForm(validContent())
+
+    await user.click(screen.getByRole('button', { name: 'Expand Project Cards' }))
 
     expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled()
     expect(screen.queryByLabelText(/phone/i)).not.toBeInTheDocument()
@@ -43,7 +46,9 @@ describe('ProjectsContentForm', { timeout: 20_000 }, () => {
     expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument()
     expect(screen.queryByLabelText(/facebook/i)).not.toBeInTheDocument()
     expect(screen.queryByLabelText(/address/i)).not.toBeInTheDocument()
-    expect(screen.queryByLabelText(/image/i)).not.toBeInTheDocument()
+    expect(
+      screen.getAllByRole('group', { name: /^Project \d+$/ }),
+    ).toHaveLength(6)
   })
 
   it('opens Project Cards with six fixed editors', async () => {

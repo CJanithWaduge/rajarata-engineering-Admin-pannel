@@ -14,7 +14,7 @@ vi.mock('../projectsContentService', () => ({
 import { ProjectsError } from '../errors'
 import type { ProjectsContent } from '../types'
 import { useProjectsContent } from '../useProjectsContent'
-import { validContent, validValues } from './testData'
+import { validContent, validDraft } from './testData'
 
 describe('useProjectsContent', () => {
   beforeEach(() => {
@@ -68,7 +68,7 @@ describe('useProjectsContent', () => {
 
     let error: unknown
     await act(async () => {
-      error = await result.current.save(validValues(), 'uid-1')
+      error = await result.current.save(validDraft(), 'uid-1', null)
     })
 
     expect(error).toBeNull()
@@ -77,6 +77,7 @@ describe('useProjectsContent', () => {
         hero: expect.objectContaining({ title: 'Electrical projects we take on' }),
       }),
       'uid-1',
+      null,
     )
     expect(result.current.status).toBe('ready')
     expect(result.current.exists).toBe(true)
@@ -92,7 +93,7 @@ describe('useProjectsContent', () => {
 
     let error: unknown
     await act(async () => {
-      error = await result.current.save(validValues(), 'uid-1')
+      error = await result.current.save(validDraft(), 'uid-1', null)
     })
 
     expect(error).toBeInstanceOf(ProjectsError)
@@ -114,12 +115,12 @@ describe('useProjectsContent', () => {
 
     let first!: Promise<null | ProjectsError>
     act(() => {
-      first = result.current.save(validValues(), 'uid-1')
+      first = result.current.save(validDraft(), 'uid-1', null)
     })
 
     let second: ProjectsError | null = null
     await act(async () => {
-      second = await result.current.save(validValues(), 'uid-1')
+      second = await result.current.save(validDraft(), 'uid-1', null)
     })
 
     expect(second).toMatchObject({

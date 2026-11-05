@@ -38,7 +38,7 @@ import {
   getProjectsContent,
   saveProjectsContent,
 } from '../projectsContentService'
-import { validContent, validValues } from './testData'
+import { validDraft, validStoredDocument } from './testData'
 
 describe('projectsContentService', () => {
   beforeEach(() => {
@@ -57,12 +57,11 @@ describe('projectsContentService', () => {
   })
 
   it('reads a complete document and its audit fields', async () => {
-    const content = validContent()
     const updatedAt = new Date('2026-02-03T04:05:06.000Z')
     mocks.getDoc.mockResolvedValue({
       exists: () => true,
       data: () => ({
-        ...content,
+        ...validStoredDocument(),
         updatedAt: new mocks.MockTimestamp(updatedAt),
         updatedBy: 'uid-2',
       }),
@@ -71,20 +70,24 @@ describe('projectsContentService', () => {
     const result = await getProjectsContent()
 
     expect(result.exists).toBe(true)
-    expect(result.content?.hero.title).toBe(content.hero.title)
+    expect(result.content?.hero.title).toBe('Electrical projects we take on')
     expect(result.content?.portfolio.projects).toHaveLength(6)
+    expect(result.content?.portfolio.projects[0]?.image.url).toBe(
+      'https://cdn.example.test/projects/card-1.webp',
+    )
+    expect(result.content?.portfolio.projects[0]?.alt).toBe('Card image alt 1')
     expect(result.content?.updatedAt).toEqual(updatedAt)
     expect(result.content?.updatedBy).toBe('uid-2')
   })
 
   it('refuses a malformed stored document', async () => {
+    const stored = validStoredDocument()
     mocks.getDoc.mockResolvedValue({
       exists: () => true,
       data: () => ({
-        ...validValues(),
+        ...stored,
         portfolio: {
-          ...validValues().portfolio,
-          projects: validValues().portfolio.projects.slice(0, 5),
+          projects: stored.portfolio.projects.slice(0, 5),
         },
       }),
     })
@@ -95,10 +98,10 @@ describe('projectsContentService', () => {
   })
 
   it('writes one full document with only the allowed top-level keys', async () => {
-    const values = validValues()
-    values.hero.title = '  Updated title  '
+    const draft = validDraft()
+    draft.hero.title = '  Updated title  '
 
-    const saved = await saveProjectsContent(values, 'uid-1')
+    const saved = await saveProjectsContent(draft, 'uid-1', null)
 
     expect(mocks.setDoc).toHaveBeenCalledTimes(1)
     const payload = mocks.setDoc.mock.calls[0]?.[1] as Record<string, unknown>
@@ -114,13 +117,18 @@ describe('projectsContentService', () => {
     expect(payload.updatedBy).toBe('uid-1')
     expect((payload.hero as { title: string }).title).toBe('Updated title')
     expect(saved.hero.title).toBe('Updated title')
+    expect(saved.portfolio.projects).toHaveLength(6)
+    expect(
+      (payload.portfolio as { projects: Array<Record<string, unknown>> })
+        .projects[0],
+    ).not.toHaveProperty('alt')
   })
 
   it('does not write when the form values are invalid', async () => {
-    const values = validValues()
-    values.portfolio.projects = values.portfolio.projects.slice(0, 5)
+    const draft = validDraft()
+    draft.portfolio.projects = draft.portfolio.projects.slice(0, 5)
 
-    await expect(saveProjectsContent(values, 'uid-1')).rejects.toMatchObject({
+    await expect(saveProjectsContent(draft, 'uid-1', null)).rejects.toMatchObject({
       code: 'validation',
     })
     expect(mocks.setDoc).not.toHaveBeenCalled()
@@ -129,11 +137,11 @@ describe('projectsContentService', () => {
   it('maps a permission failure while keeping the write error code', async () => {
     mocks.setDoc.mockRejectedValue({ code: 'permission-denied' })
 
-    await expect(
-      saveProjectsContent(validValues(), 'uid-1'),
-    ).rejects.toBeInstanceOf(ProjectsError)
-    await expect(
-      saveProjectsContent(validValues(), 'uid-1'),
-    ).rejects.toMatchObject({ code: 'permission-denied' })
+    await expect(saveProjectsContent(validDraft(), 'uid-1', null)).rejects.toBeInstanceOf(
+      ProjectsError,
+    )
+    await expect(saveProjectsContent(validDraft(), 'uid-1', null)).rejects.toMatchObject({
+      code: 'permission-denied',
+    })
   })
 })

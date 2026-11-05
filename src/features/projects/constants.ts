@@ -1,3 +1,5 @@
+import { IMAGE_RULES } from '../home/constants'
+
 export const PROJECT_COUNT = 6
 export const TRACK_RECORD_COUNT = 3
 export const CTA_POINT_COUNT = 2
@@ -40,6 +42,7 @@ export const PROJECT_TEXT_LIMITS = {
   projectSpecLabel: 60,
   projectSpecValue: 80,
   projectSpecDetail: 600,
+  projectImageAlt: 160,
   trackKicker: 60,
   trackValue: 20,
   trackDescription: 300,
@@ -47,3 +50,15 @@ export const PROJECT_TEXT_LIMITS = {
   ctaTitle: 100,
   ctaBody: 600,
 } as const
+
+/** Reuses the Home card image limits so both panels share one gate. */
+export const PROJECT_IMAGE_RULE = IMAGE_RULES.card
+
+/**
+ * Leaves headroom below Firestore's 1 MiB document limit when images are
+ * stored inline. All six card slots are budgeted together, like the Home page.
+ */
+export const PROJECT_INLINE_MEDIA_DOC_BUDGET = 900_000
+
+/** Storage folder for the project card images (mirrored in `storage.rules`). */
+export const PROJECT_STORAGE_ROOT = 'projects/cards'

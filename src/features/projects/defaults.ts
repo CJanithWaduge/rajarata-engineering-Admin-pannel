@@ -4,9 +4,10 @@ import {
   TRACK_RECORD_COUNT,
 } from './constants'
 import type {
-  ProjectContent,
+  ProjectFormValues,
   ProjectsContent,
   ProjectsFormValues,
+  ProjectImageSelection,
   TrackRecordColumn,
 } from './types'
 
@@ -14,7 +15,7 @@ export function createEmptyColumn(): TrackRecordColumn {
   return { kicker: '', value: '', description: '' }
 }
 
-export function createEmptyProject(index: number): ProjectContent {
+export function createEmptyProject(index: number): ProjectFormValues {
   return {
     category: PROJECT_CATEGORIES[index % PROJECT_CATEGORIES.length] ?? PROJECT_CATEGORIES[0],
     subTag: '',
@@ -27,6 +28,7 @@ export function createEmptyProject(index: number): ProjectContent {
     specLabel: '',
     specValue: '',
     specDetail: '',
+    alt: '',
   }
 }
 
@@ -46,10 +48,7 @@ export function createEmptyProjectsValues(): ProjectsFormValues {
   }
 }
 
-/**
- * Copies stored content into fresh form state. The document is validated before
- * it reaches this point, so the fixed arrays already carry the right length.
- */
+/** Copies stored content into fresh form state without inventing copy. */
 export function valuesFromContent(
   content: ProjectsContent | null,
 ): ProjectsFormValues {
@@ -63,7 +62,18 @@ export function valuesFromContent(
     },
     portfolio: {
       projects: content.portfolio.projects.map((project) => ({
-        ...project,
+        category: project.category,
+        subTag: project.subTag,
+        location: project.location,
+        year: project.year,
+        typePlaceholder: project.typePlaceholder,
+        title: project.title,
+        summary: project.summary,
+        ref: project.ref,
+        specLabel: project.specLabel,
+        specValue: project.specValue,
+        specDetail: project.specDetail,
+        alt: project.alt,
       })),
     },
     trackRecord: {
@@ -77,4 +87,15 @@ export function valuesFromContent(
       body: content.cta.body,
     },
   }
+}
+
+/** Initial per-slot image state for the form. */
+export function imageSelectionFromContent(
+  content: ProjectsContent | null,
+): ProjectImageSelection[] {
+  return Array.from({ length: PROJECT_COUNT }, (_, index): ProjectImageSelection => {
+    const image = content?.portfolio.projects[index]?.image
+    if (!image || !image.url) return { kind: 'none' }
+    return { kind: 'stored', image: { ...image } }
+  })
 }
