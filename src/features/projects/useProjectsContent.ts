@@ -1,0 +1,87 @@
+import { useEffect, useRef, useState } from 'react'
+import { getProjectsContent, saveProjectsContent } from './projectsContentService'
+import { ProjectsError } from './errors'
+import type {
+  ProjectsContent,
+  ProjectsFormValues,
+  ProjectsStatus,
+} from './types'
+
+export type UseProjectsContentResult = {
+  status: ProjectsStatus
+  content: ProjectsContent | null
+  exists: boolean
+  error: string | null
+  /** Increments after every successful load or save so the form can remount. */
+  version: number
+  reload: () => Promise<void>
+  save: (
+    values: ProjectsFormValues,
+    uid: string,
+  ) => Promise<null | ProjectsError>
+}
+
+export function useProjectsContent(): UseProjectsContentResult {
+  const [status, setStatus] = useState<ProjectsStatus>('loading')
+  const [content, setContent] = useState<ProjectsContent | null>(null)
+  const [exists, setExists] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [version, setVersion] = useState(0)
+  const savingRef = useRef(false)
+
+  const reload = async () => {
+    setStatus('loading')
+    setError(null)
+    try {
+      const result = await getProjectsContent()
+      setContent(result.content)
+      setExists(result.exists)
+      setVersion((current) => current + 1)
+      setStatus('ready')
+    } catch (err) {
+      if (err instanceof ProjectsError) {
+        setError(err.message)
+      } else {
+        setError(new ProjectsError('unknown').message)
+      }
+      setStatus('error')
+    }
+  }
+
+  const save = async (values: ProjectsFormValues, uid: string) => {
+    // The button is disabled while saving, but a double-click can land before
+    // the isSaving prop re-renders. This ref closes that window synchronously.
+    if (savingRef.current) {
+      return new ProjectsError('unknown', 'A save is already in progress.')
+    }
+
+    savingRef.current = true
+    setStatus('saving')
+    setError(null)
+
+    try {
+      const saved = await saveProjectsContent(values, uid)
+      setContent(saved)
+      setExists(true)
+      setVersion((current) => current + 1)
+      setStatus('ready')
+      return null
+    } catch (err) {
+      const projectsError =
+        err instanceof ProjectsError ? err : new ProjectsError('unknown')
+      setError(projectsError.message)
+      setStatus('ready')
+      return projectsError
+    } finally {
+      savingRef.current = false
+    }
+  }
+
+  useEffect(() => {
+    void reload()
+    // Load once on mount; reload/save expose their own entry points.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  return { status, content, exists, error, version, reload, save }
+}

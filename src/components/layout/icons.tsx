@@ -53,6 +53,16 @@ export function AboutIcon({ className }: IconProps) {
   )
 }
 
+export function ProjectsIcon({ className }: IconProps) {
+  return (
+    <svg {...strokeProps} className={className}>
+      <path d="M3 20h18" />
+      <path d="M5 20v-6l7-4 7 4v6" />
+      <circle cx="12" cy="14.5" r="2.5" />
+    </svg>
+  )
+}
+
 export function SettingsIcon({ className }: IconProps) {
   return (
     <svg {...strokeProps} className={className}>

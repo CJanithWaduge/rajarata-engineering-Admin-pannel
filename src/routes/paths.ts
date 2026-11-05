@@ -5,6 +5,7 @@ export const ROUTES = {
   home: '/home',
   services: '/services',
   about: '/about',
+  projects: '/projects',
   settings: '/settings',
 } as const
 

@@ -13,6 +13,7 @@ import {
   HomeIcon,
   LogoutIcon,
   MenuIcon,
+  ProjectsIcon,
   ServicesIcon,
   SettingsIcon,
 } from './icons'
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
   { to: ROUTES.home, label: 'Home Page', icon: HomeIcon, end: false },
   { to: ROUTES.services, label: 'Services Page', icon: ServicesIcon, end: false },
   { to: ROUTES.about, label: 'About Us Page', icon: AboutIcon, end: false },
+  { to: ROUTES.projects, label: 'Projects Page', icon: ProjectsIcon, end: false },
   { to: ROUTES.settings, label: 'Site Settings', icon: SettingsIcon, end: false },
 ] as const
 

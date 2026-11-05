@@ -6,6 +6,7 @@ import { LoginPage } from '../features/auth/pages/LoginPage'
 import { AboutContentPage } from '../features/about/pages/AboutContentPage'
 import { HomeContentPage } from '../features/home/pages/HomeContentPage'
 import { ServicesContentPage } from '../features/services/pages/ServicesContentPage'
+import { ProjectsContentPage } from '../features/projects/pages/ProjectsContentPage'
 import { SettingsPage } from '../features/settings/pages/SettingsPage'
 import { DashboardPage } from '../pages/DashboardPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
           { path: ROUTES.home, element: <HomeContentPage /> },
           { path: ROUTES.services, element: <ServicesContentPage /> },
           { path: ROUTES.about, element: <AboutContentPage /> },
+          { path: ROUTES.projects, element: <ProjectsContentPage /> },
           { path: ROUTES.settings, element: <SettingsPage /> },
         ],
       },
