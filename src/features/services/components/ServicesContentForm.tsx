@@ -77,9 +77,9 @@ export function ServicesContentForm({
       {errorMessage ? <Alert variant="error">{errorMessage}</Alert> : null}
 
       <Alert variant="info">
-        All text fields are required except the optional mobile process descriptions.
-        The document is saved as one unit, so every section must be complete before
-        the save is accepted.
+        Every text field is optional; leave one blank to keep the public page’s
+        build-time copy for that slot. The document is saved as one unit, so fixed
+        array counts and categorical fields (icons, anchors) must still be valid.
       </Alert>
 
       <CollapsibleSection

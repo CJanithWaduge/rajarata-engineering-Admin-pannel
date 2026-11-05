@@ -36,13 +36,15 @@ describe('servicesFormSchema', () => {
     expect(result.data.services[0]?.suitableFor).toHaveLength(SUITABLE_FOR_COUNT)
   })
 
-  it('rejects blank required text', () => {
+  it('allows blank text and treats it as a keep-the-public-value slot', () => {
     const values = validValues()
     values.directory.title = '   '
 
-    expect(paths(servicesFormSchema.safeParse(values))).toContain(
-      'directory.title',
-    )
+    const result = servicesFormSchema.safeParse(values)
+
+    expect(result.success).toBe(true)
+    if (!result.success) return
+    expect(result.data.directory.title).toBe('')
   })
 
   it('rejects text over its limit', () => {

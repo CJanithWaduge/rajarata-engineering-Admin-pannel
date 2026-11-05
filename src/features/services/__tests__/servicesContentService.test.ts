@@ -116,7 +116,7 @@ describe('servicesContentService', () => {
 
   it('does not write when the form values are invalid', async () => {
     const values = validValues()
-    values.hero.eyebrow = ''
+    values.services = values.services.slice(0, 7)
 
     await expect(saveServicesContent(values, 'uid-1')).rejects.toMatchObject({
       code: 'validation',

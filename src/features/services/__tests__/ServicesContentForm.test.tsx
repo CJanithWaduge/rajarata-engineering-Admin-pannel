@@ -75,24 +75,28 @@ describe('ServicesContentForm', { timeout: 20_000 }, () => {
     ).toBeInTheDocument()
   })
 
-  it('rejects an incomplete form, opens the section, and focuses an error', async () => {
+  it('submits when only the title is filled and the other text fields are blank', async () => {
     const user = userEvent.setup()
     const onSubmit = renderForm(null)
-
     const title = document.getElementById('services-hero-title') as HTMLInputElement
     await user.type(title, 'Only a title')
     expect(screen.getByRole('button', { name: 'Save changes' })).toBeEnabled()
 
     await user.click(screen.getByRole('button', { name: 'Save changes' }))
 
-    expect(onSubmit).not.toHaveBeenCalled()
-    expect(screen.getByText('Hero eyebrow is required.')).toBeInTheDocument()
-    await waitFor(() => {
-      expect(document.activeElement).toHaveAttribute('aria-invalid', 'true')
-    })
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1))
+    expect(onSubmit.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        hero: expect.objectContaining({ title: 'Only a title' }),
+        services: expect.any(Array),
+        process: expect.objectContaining({ steps: expect.any(Array) }),
+      }),
+    )
+    expect(onSubmit.mock.calls[0]?.[0].services).toHaveLength(8)
+    expect(onSubmit.mock.calls[0]?.[0].process.steps).toHaveLength(6)
   })
 
-  it('opens a collapsed section that owns a validation error', async () => {
+  it('submits with a blank directory title because text is optional', async () => {
     const user = userEvent.setup()
     const onSubmit = renderForm(validContent())
     const directoryTitle = document.getElementById(
@@ -103,9 +107,12 @@ describe('ServicesContentForm', { timeout: 20_000 }, () => {
     fireEvent.change(directoryTitle, { target: { value: '' } })
     await user.click(screen.getByRole('button', { name: 'Save changes' }))
 
-    expect(onSubmit).not.toHaveBeenCalled()
-    await waitFor(() => expect(directoryTitle).toBeVisible())
-    expect(screen.getByText('Directory title is required.')).toBeInTheDocument()
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1))
+    expect(onSubmit.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        directory: expect.objectContaining({ title: '' }),
+      }),
+    )
   })
 
   it('submits the complete edited document', async () => {

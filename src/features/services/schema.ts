@@ -12,12 +12,14 @@ import {
 } from './constants'
 import type { ServicesFormValues } from './types'
 
-function requiredText(label: string, max: number) {
-  return z
-    .string()
-    .trim()
-    .min(1, `${label} is required.`)
-    .max(max, `${label} must be ${max} characters or fewer.`)
+/**
+ * Every editable text field is optional. A blank value is stored as an empty
+ * string and the public site keeps the build-time copy for that slot, exactly
+ * like the About content. Fixed array counts and the categorical fields
+ * (icons, anchors) stay enforced.
+ */
+function optionalText(label: string, max: number) {
+  return z.string().trim().max(max, `${label} must be ${max} characters or fewer.`)
 }
 
 const iconSchema = z.enum(SERVICE_ICONS, {
@@ -28,15 +30,15 @@ const anchorSchema = z.enum(SERVICE_ANCHORS, {
 })
 
 const quickLinkSchema = z.object({
-  label: requiredText('Quick link label', SERVICES_TEXT_LIMITS.quickLinkLabel),
+  label: optionalText('Quick link label', SERVICES_TEXT_LIMITS.quickLinkLabel),
   icon: iconSchema,
   target: anchorSchema,
 })
 
 const metricSchema = z.object({
-  kicker: requiredText('Metric kicker', SERVICES_TEXT_LIMITS.metricKicker),
-  title: requiredText('Metric title', SERVICES_TEXT_LIMITS.metricTitle),
-  description: requiredText(
+  kicker: optionalText('Metric kicker', SERVICES_TEXT_LIMITS.metricKicker),
+  title: optionalText('Metric title', SERVICES_TEXT_LIMITS.metricTitle),
+  description: optionalText(
     'Metric description',
     SERVICES_TEXT_LIMITS.metricDescription,
   ),
@@ -44,15 +46,18 @@ const metricSchema = z.object({
 
 const serviceSchema = z.object({
   icon: iconSchema,
-  category: requiredText('Service category', SERVICES_TEXT_LIMITS.serviceCategory),
-  title: requiredText('Service title', SERVICES_TEXT_LIMITS.serviceTitle),
-  description: requiredText(
+  category: optionalText(
+    'Service category',
+    SERVICES_TEXT_LIMITS.serviceCategory,
+  ),
+  title: optionalText('Service title', SERVICES_TEXT_LIMITS.serviceTitle),
+  description: optionalText(
     'Service description',
     SERVICES_TEXT_LIMITS.serviceDescription,
   ),
-  scope: requiredText('Service scope', SERVICES_TEXT_LIMITS.serviceScope),
+  scope: optionalText('Service scope', SERVICES_TEXT_LIMITS.serviceScope),
   suitableFor: z
-    .array(requiredText('Suitable-for item', SERVICES_TEXT_LIMITS.suitableFor))
+    .array(optionalText('Suitable-for item', SERVICES_TEXT_LIMITS.suitableFor))
     .length(
       SUITABLE_FOR_COUNT,
       `Each service needs exactly ${SUITABLE_FOR_COUNT} suitable-for items.`,
@@ -60,8 +65,8 @@ const serviceSchema = z.object({
 })
 
 const processStepSchema = z.object({
-  title: requiredText('Step title', SERVICES_TEXT_LIMITS.processStepTitle),
-  description: requiredText(
+  title: optionalText('Step title', SERVICES_TEXT_LIMITS.processStepTitle),
+  description: optionalText(
     'Step description',
     SERVICES_TEXT_LIMITS.processStepDescription,
   ),
@@ -76,9 +81,9 @@ const processStepSchema = z.object({
 
 export const servicesFormSchema = z.object({
   hero: z.object({
-    eyebrow: requiredText('Hero eyebrow', SERVICES_TEXT_LIMITS.heroEyebrow),
-    title: requiredText('Hero title', SERVICES_TEXT_LIMITS.heroTitle),
-    intro: requiredText('Hero intro', SERVICES_TEXT_LIMITS.heroIntro),
+    eyebrow: optionalText('Hero eyebrow', SERVICES_TEXT_LIMITS.heroEyebrow),
+    title: optionalText('Hero title', SERVICES_TEXT_LIMITS.heroTitle),
+    intro: optionalText('Hero intro', SERVICES_TEXT_LIMITS.heroIntro),
     quickLinks: z
       .array(quickLinkSchema)
       .length(QUICK_LINK_COUNT, `Exactly ${QUICK_LINK_COUNT} quick links are required.`),
@@ -87,20 +92,23 @@ export const servicesFormSchema = z.object({
       .length(METRIC_COUNT, `Exactly ${METRIC_COUNT} metrics are required.`),
   }),
   directory: z.object({
-    eyebrow: requiredText(
+    eyebrow: optionalText(
       'Directory eyebrow',
       SERVICES_TEXT_LIMITS.directoryEyebrow,
     ),
-    title: requiredText('Directory title', SERVICES_TEXT_LIMITS.directoryTitle),
-    intro: requiredText('Directory intro', SERVICES_TEXT_LIMITS.directoryIntro),
+    title: optionalText('Directory title', SERVICES_TEXT_LIMITS.directoryTitle),
+    intro: optionalText('Directory intro', SERVICES_TEXT_LIMITS.directoryIntro),
   }),
   services: z
     .array(serviceSchema)
     .length(SERVICE_COUNT, `Exactly ${SERVICE_COUNT} services are required.`),
   process: z.object({
-    eyebrow: requiredText('Process eyebrow', SERVICES_TEXT_LIMITS.processEyebrow),
-    title: requiredText('Process title', SERVICES_TEXT_LIMITS.processTitle),
-    intro: requiredText('Process intro', SERVICES_TEXT_LIMITS.processIntro),
+    eyebrow: optionalText(
+      'Process eyebrow',
+      SERVICES_TEXT_LIMITS.processEyebrow,
+    ),
+    title: optionalText('Process title', SERVICES_TEXT_LIMITS.processTitle),
+    intro: optionalText('Process intro', SERVICES_TEXT_LIMITS.processIntro),
     steps: z
       .array(processStepSchema)
       .length(
@@ -109,11 +117,11 @@ export const servicesFormSchema = z.object({
       ),
   }),
   cta: z.object({
-    eyebrow: requiredText('CTA eyebrow', SERVICES_TEXT_LIMITS.ctaEyebrow),
-    title: requiredText('CTA title', SERVICES_TEXT_LIMITS.ctaTitle),
-    body: requiredText('CTA body', SERVICES_TEXT_LIMITS.ctaBody),
+    eyebrow: optionalText('CTA eyebrow', SERVICES_TEXT_LIMITS.ctaEyebrow),
+    title: optionalText('CTA title', SERVICES_TEXT_LIMITS.ctaTitle),
+    body: optionalText('CTA body', SERVICES_TEXT_LIMITS.ctaBody),
     points: z
-      .array(requiredText('CTA point', SERVICES_TEXT_LIMITS.ctaPoint))
+      .array(optionalText('CTA point', SERVICES_TEXT_LIMITS.ctaPoint))
       .length(CTA_POINT_COUNT, `Exactly ${CTA_POINT_COUNT} CTA points are required.`),
   }),
 }) satisfies z.ZodType<ServicesFormValues, ServicesFormValues>
