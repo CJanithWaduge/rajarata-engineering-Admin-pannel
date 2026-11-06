@@ -15,6 +15,9 @@ const messages: Record<SettingsErrorCode, string> = {
   'not-ready': 'Firestore is not set up for this project; the settings document could not be reached.',
   network: 'Network error. Check your connection and try again.',
   validation: 'Some settings values are invalid. Check the fields below.',
+  upload: 'The logo could not be uploaded. Check your connection and try again.',
+  'invalid-document':
+    'The stored settings document is incomplete or invalid. Repair it in Firestore before editing here.',
   unknown: 'Could not save site settings. Please try again.',
 }
 
@@ -29,6 +32,15 @@ export function mapFirestoreErrorToSettingsCode(code?: string): SettingsErrorCod
   if (raw === 'unavailable' || raw === 'deadline-exceeded') return 'network'
   if (raw === 'unauthenticated' || raw === 'cancelled') return 'network'
   return 'unknown'
+}
+
+export function toSettingsError(error: unknown): SettingsError {
+  if (error instanceof SettingsError) return error
+
+  const raw = (error as { code?: string } | null)?.code ?? ''
+  const code = mapFirestoreErrorToSettingsCode(raw)
+  logSettingsError(code, raw)
+  return new SettingsError(code)
 }
 
 export function logSettingsError(code: SettingsErrorCode, raw?: string) {

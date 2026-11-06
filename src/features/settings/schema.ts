@@ -56,6 +56,13 @@ const locationSchema = z
   .transform((value) => value.trim())
   .refine((value) => value.length <= 80, { message: 'Location label is too long.' })
 
+const logoAltSchema = z
+  .string()
+  .transform((value) => value.trim())
+  .refine((value) => value.length <= 160, {
+    message: 'Logo alt text must be 160 characters or fewer.',
+  })
+
 export const settingsSchema = z.object({
   phone: phoneSchema,
   whatsapp: whatsappSchema,
@@ -64,6 +71,7 @@ export const settingsSchema = z.object({
   facebookUrl: facebookUrlSchema,
   facebookLabel: facebookLabelSchema,
   location: locationSchema,
+  logoAlt: logoAltSchema,
 })
 
 export function normaliseSettings(input: SettingsFormValues): SettingsFormValues {
@@ -81,6 +89,7 @@ export function normaliseSettings(input: SettingsFormValues): SettingsFormValues
     facebookUrl: input.facebookUrl.trim(),
     facebookLabel: input.facebookLabel.trim(),
     location: input.location.trim(),
+    logoAlt: input.logoAlt.trim(),
   }
 }
 

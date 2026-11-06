@@ -12,6 +12,13 @@ const mocks = vi.hoisted(() => ({
     facebookUrl: '',
     facebookLabel: '',
     location: '',
+    logoUrl: '',
+    logoAlt: '',
+    logoPath: '',
+    logoWidth: 0,
+    logoHeight: 0,
+    logoSize: 0,
+    logoContentType: '',
     updatedAt: null,
     updatedBy: null,
   },
@@ -61,8 +68,12 @@ describe('SettingsPage', () => {
 
     expect(await screen.findByText('Successfully saved changes')).toBeInTheDocument()
     expect(mocks.save).toHaveBeenCalledWith(
-      expect.objectContaining({ phone: '+94771234567' }),
+      expect.objectContaining({
+        phone: '+94771234567',
+        image: expect.objectContaining({ kind: 'none' }),
+      }),
       'uid-1',
+      expect.objectContaining({ phone: '' }),
     )
 
     await user.click(screen.getByRole('button', { name: 'Dismiss notification' }))

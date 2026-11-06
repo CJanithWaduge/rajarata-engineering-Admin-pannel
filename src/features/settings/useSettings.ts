@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getSettings, saveSettings } from './settingsService'
-import type { SettingsFormValues, SiteSettings, SettingsStatus } from './types'
+import type { SettingsDraft, SiteSettings, SettingsStatus } from './types'
 import { EMPTY_SETTINGS } from './defaults'
 import { SettingsError, mapFirestoreErrorToSettingsCode } from './errors'
 
@@ -10,7 +10,11 @@ export type UseSettingsResult = {
   exists: boolean
   error: string | null
   reload: () => Promise<void>
-  save: (values: SettingsFormValues, uid: string) => Promise<null | SettingsError>
+  save: (
+    values: SettingsDraft,
+    uid: string,
+    previous: SiteSettings | null,
+  ) => Promise<null | SettingsError>
 }
 
 export function useSettings(): UseSettingsResult {
@@ -38,12 +42,12 @@ export function useSettings(): UseSettingsResult {
     }
   }
 
-  const save = async (values: SettingsFormValues, uid: string) => {
+  const save = async (values: SettingsDraft, uid: string) => {
     if (status === 'saving') return null
     setStatus('saving')
     setError(null)
     try {
-      const saved = await saveSettings(values, uid)
+      const saved = await saveSettings(values, uid, settings)
       setSettings(saved)
       setExists(true)
       setStatus('ready')

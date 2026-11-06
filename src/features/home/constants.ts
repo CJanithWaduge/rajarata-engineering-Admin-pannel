@@ -16,7 +16,7 @@ export const EXTENSION_BY_TYPE: Record<ImageContentType, string> = {
   'image/webp': 'webp',
 }
 
-export type ImageKind = 'hero' | 'card'
+export type ImageKind = 'hero' | 'card' | 'logo'
 
 export type ImageRule = {
   label: string
@@ -57,6 +57,17 @@ export const IMAGE_RULES: Record<ImageKind, ImageRule> = {
     minAspect: 1.4,
     maxAspect: 1.9,
   },
+  logo: {
+    label: 'Logo image',
+    maxBytes: 5 * 1024 * 1024,
+    maxBytesLabel: '5 MB',
+    minWidth: 1080,
+    minHeight: 1080,
+    maxWidth: 1080,
+    maxHeight: 1080,
+    minAspect: 1,
+    maxAspect: 1,
+  },
 }
 
 /**
@@ -76,6 +87,7 @@ export const MAX_SOURCE_PIXELS_LABEL = '60 megapixels'
 export const COMPRESSION_TARGETS: Record<ImageKind, { maxWidth: number; maxHeight: number }> = {
   hero: { maxWidth: 2400, maxHeight: 1600 },
   card: { maxWidth: 1800, maxHeight: 1200 },
+  logo: { maxWidth: 1080, maxHeight: 1080 },
 }
 
 /**
@@ -88,6 +100,7 @@ export const COMPRESSION_TARGETS: Record<ImageKind, { maxWidth: number; maxHeigh
 export const OPTIMIZE_ABOVE_BYTES: Record<ImageKind, number> = {
   hero: 600 * 1024,
   card: 400 * 1024,
+  logo: 400 * 1024,
 }
 
 /** Tried in order until the encoded file fits the per-kind byte limit. */
@@ -105,16 +118,19 @@ export const INLINE_IMAGE_TARGETS: Record<
 > = {
   hero: { maxWidth: 1600, maxHeight: 1200 },
   card: { maxWidth: 1200, maxHeight: 900 },
+  logo: { maxWidth: 1080, maxHeight: 1080 },
 }
 
 export const INLINE_IMAGE_MAX_BYTES: Record<ImageKind, number> = {
   hero: 160 * 1024,
   card: 90 * 1024,
+  logo: 90 * 1024,
 }
 
 export const INLINE_IMAGE_MAX_BYTES_LABEL: Record<ImageKind, string> = {
   hero: '160 KB',
   card: '90 KB',
+  logo: '90 KB',
 }
 
 export const INLINE_COMPRESSION_QUALITIES = [0.7, 0.6, 0.5, 0.4, 0.3, 0.22] as const

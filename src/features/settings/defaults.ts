@@ -8,6 +8,13 @@ export const EMPTY_SETTINGS: SiteSettings = {
   facebookUrl: '',
   facebookLabel: '',
   location: '',
+  logoUrl: '',
+  logoAlt: '',
+  logoPath: '',
+  logoWidth: 0,
+  logoHeight: 0,
+  logoSize: 0,
+  logoContentType: '',
   updatedAt: null,
   updatedBy: null,
 }
@@ -86,4 +93,5 @@ export const EMPTY_FORM_VALUES: SettingsFormValues = {
   facebookUrl: '',
   facebookLabel: '',
   location: '',
+  logoAlt: '',
 }

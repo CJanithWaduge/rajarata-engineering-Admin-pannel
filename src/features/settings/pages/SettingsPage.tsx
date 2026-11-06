@@ -9,7 +9,7 @@ import { SettingsForm } from '../components/SettingsForm'
 import { SettingsEmptyState } from '../components/SettingsEmptyState'
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard'
 import { EMPTY_FORM_VALUES } from '../defaults'
-import type { SettingsFormValues } from '../types'
+import type { SettingsDraft, SettingsFormValues } from '../types'
 
 export function SettingsPage() {
   const { admin } = useAuth()
@@ -25,15 +25,16 @@ export function SettingsPage() {
     facebookUrl: settings.facebookUrl,
     facebookLabel: settings.facebookLabel,
     location: settings.location,
+    logoAlt: settings.logoAlt,
   }
 
   if (status === 'loading') {
     return <FullPageSpinner />
   }
 
-  const handleSave = async (values: SettingsFormValues) => {
+  const handleSave = async (draft: SettingsDraft) => {
     setSuccess(null)
-    const result = await save(values, admin?.uid ?? '')
+    const result = await save(draft, admin?.uid ?? '', settings)
     if (!result) {
       setSuccess('Successfully saved changes')
     }
@@ -46,8 +47,8 @@ export function SettingsPage() {
       <header>
         <h1 className="font-headline-md text-headline-md text-on-surface">Site Settings</h1>
         <p className="mt-2 font-body-md text-body-md text-secondary">
-          Contact details and links shown on every page of the public website. Changes go live
-          immediately.
+          Contact details, links, and logo shown on every page of the public website.
+          Changes go live immediately.
         </p>
       </header>
 
@@ -70,6 +71,22 @@ export function SettingsPage() {
 
       <SettingsForm
         defaultValues={defaultValues}
+        initialLogo={
+          settings.logoUrl
+            ? {
+                kind: 'stored',
+                image: {
+                  url: settings.logoUrl,
+                  path: settings.logoPath,
+                  alt: settings.logoAlt,
+                  width: settings.logoWidth,
+                  height: settings.logoHeight,
+                  size: settings.logoSize,
+                  contentType: settings.logoContentType,
+                },
+              }
+            : { kind: 'none' }
+        }
         onSubmit={handleSave}
         isSaving={status === 'saving'}
         errorMessage={status === 'ready' && error ? error : null}
