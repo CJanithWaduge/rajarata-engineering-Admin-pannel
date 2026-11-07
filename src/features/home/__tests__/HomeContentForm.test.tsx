@@ -353,9 +353,7 @@ describe('HomeContentForm', () => {
   it('shows the resolution, aspect ratio, and size limits for each image', () => {
     renderForm(null)
 
-    expect(screen.getByText(/Min 1600 × 1000 px/)).toBeInTheDocument()
-    expect(screen.getByText(/aspect 1.2:1–2:1/)).toBeInTheDocument()
-    expect(screen.getAllByText(/Min 1000 × 700 px/)).toHaveLength(3)
-    expect(screen.getAllByText(/aspect 1.4:1–1.9:1/)).toHaveLength(3)
+    expect(screen.getByText(/Exactly 1920 × 1080 px \(16:9\)/)).toBeInTheDocument()
+    expect(screen.getAllByText(/Exactly 1200 × 800 px \(3:2\)/)).toHaveLength(3)
   })
 })

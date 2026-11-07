@@ -1,7 +1,7 @@
 import {
   INLINE_IMAGE_MAX_BYTES_LABEL,
   INLINE_IMAGE_TARGETS,
-  MAX_SOURCE_BYTES_LABEL,
+  imageRuleHint,
 } from '../../home/constants'
 import { INLINE_MEDIA_ENABLED } from '../../home/mediaMode'
 import { LOGO_IMAGE_RULE } from '../constants'
@@ -111,7 +111,7 @@ export function SettingsImageField({
         </p>
       ) : (
         <p className="font-body-sm text-body-sm text-secondary">
-          {`Min ${rule.minWidth} × ${rule.minHeight} px · max ${rule.maxWidth} × ${rule.maxHeight} px · aspect ${rule.minAspect}:1–${rule.maxAspect}:1 · JPEG, PNG or WebP · source up to ${MAX_SOURCE_BYTES_LABEL} · large files are optimized automatically.${inlineHint}`}
+          {`${imageRuleHint(rule)}${inlineHint}`}
         </p>
       )}
     </div>

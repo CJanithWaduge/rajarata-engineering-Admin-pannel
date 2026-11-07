@@ -8,6 +8,7 @@ import { useSettings } from '../useSettings'
 import { SettingsForm } from '../components/SettingsForm'
 import { SettingsEmptyState } from '../components/SettingsEmptyState'
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard'
+import { SeedButton } from '../components/SeedButton'
 import { EMPTY_FORM_VALUES } from '../defaults'
 import type { SettingsDraft, SettingsFormValues } from '../types'
 
@@ -91,6 +92,8 @@ export function SettingsPage() {
         isSaving={status === 'saving'}
         errorMessage={status === 'ready' && error ? error : null}
       />
+
+      <SeedButton />
 
       <UnsavedChangesGuard when={dirty && status === 'ready'} />
 

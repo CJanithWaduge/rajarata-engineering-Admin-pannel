@@ -18,16 +18,16 @@ const HERO = {
   name: 'hero.jpg',
   type: 'image/jpeg',
   size: 1024 * 1024,
-  width: 1600,
-  height: 1000,
+  width: 1920,
+  height: 1080,
 }
 
 const CARD = {
   name: 'card.webp',
   type: 'image/webp',
   size: 512 * 1024,
-  width: 1600,
-  height: 900,
+  width: 1200,
+  height: 800,
 }
 
 function fakeFile(header: number[]): File {
@@ -59,8 +59,8 @@ describe('validateImageMetadata', () => {
     expect(validateImageMetadata(HERO, 'hero')).toEqual({
       ok: true,
       metadata: {
-        width: 1600,
-        height: 1000,
+        width: 1920,
+        height: 1080,
         size: HERO.size,
         contentType: 'image/jpeg',
       },
@@ -109,16 +109,16 @@ describe('validateImageMetadata', () => {
 
   it('rejects a hero below the minimum dimensions', () => {
     const result = validateImageMetadata(
-      { ...HERO, width: 1599, height: 1000 },
+      { ...HERO, width: 1919 },
       'hero',
     )
     expect(result.ok).toBe(false)
-    if (!result.ok) expect(result.message).toContain('1600 x 1000')
+    if (!result.ok) expect(result.message).toContain('1920 x 1080')
   })
 
   it('allows an optimized inline result below the source minimum', () => {
     const result = validateImageMetadata(
-      { ...HERO, height: 900 },
+      { ...HERO, width: 1600, height: 900 },
       'hero',
       { requireMinimumDimensions: false },
     )
@@ -131,13 +131,14 @@ describe('validateImageMetadata', () => {
       'hero',
     )
     expect(result.ok).toBe(false)
-    if (!result.ok) expect(result.message).toContain('6000 x 6000')
+    if (!result.ok) expect(result.message).toContain('1920 x 1080')
   })
 
   it('rejects an aspect ratio outside the allowed range', () => {
     const result = validateImageMetadata(
-      { ...HERO, width: 3000, height: 1000 },
-      'hero',
+      { ...CARD, width: 1200, height: 700 },
+      'card',
+      { requireMinimumDimensions: false },
     )
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.message).toContain('aspect ratio')
@@ -181,7 +182,7 @@ describe('readImageFile', () => {
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test')
     vi.stubGlobal(
       'createImageBitmap',
-      vi.fn(async () => ({ width: 1600, height: 1000, close: vi.fn() })),
+      vi.fn(async () => ({ width: 1920, height: 1080, close: vi.fn() })),
     )
 
     const file = fakeFile([0xff, 0xd8, 0xff, 0, 0, 0, 0, 0, 0, 0, 0, 0])
@@ -189,8 +190,8 @@ describe('readImageFile', () => {
 
     expect(result.ok).toBe(true)
     if (result.ok) {
-      expect(result.image.width).toBe(1600)
-      expect(result.image.height).toBe(1000)
+      expect(result.image.width).toBe(1920)
+      expect(result.image.height).toBe(1080)
       expect(result.image.previewUrl).toBe('blob:test')
       expect(result.image.optimized).toBe(false)
       expect(result.image.originalSize).toBe(file.size)
@@ -202,7 +203,7 @@ describe('readImageFile', () => {
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:optimized')
     vi.stubGlobal(
       'createImageBitmap',
-      vi.fn(async () => ({ width: 1600, height: 1000, close: vi.fn() })),
+      vi.fn(async () => ({ width: 1920, height: 1080, close: vi.fn() })),
     )
 
     const optimizedFile = new File([new Uint8Array(1024)], 'hero.jpg', {
@@ -212,8 +213,8 @@ describe('readImageFile', () => {
       ok: true,
       image: {
         file: optimizedFile,
-        width: 1600,
-        height: 1000,
+        width: 1920,
+        height: 1080,
         size: 1024,
         contentType: 'image/jpeg',
       },
@@ -239,7 +240,7 @@ describe('readImageFile', () => {
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:optimized')
     vi.stubGlobal(
       'createImageBitmap',
-      vi.fn(async () => ({ width: 4000, height: 2500, close: vi.fn() })),
+      vi.fn(async () => ({ width: 3000, height: 2000, close: vi.fn() })),
     )
 
     const optimizedFile = new File([new Uint8Array(1024)], 'card.jpg', {
@@ -249,8 +250,8 @@ describe('readImageFile', () => {
       ok: true,
       image: {
         file: optimizedFile,
-        width: 1800,
-        height: 1125,
+        width: 1200,
+        height: 800,
         size: 1024,
         contentType: 'image/jpeg',
       },
@@ -265,14 +266,14 @@ describe('readImageFile', () => {
     const result = await readImageFile(source, 'card')
 
     expect(compressionMocks.compressImage).toHaveBeenCalledWith(source, 'card', {
-      width: 4000,
-      height: 2500,
+      width: 3000,
+      height: 2000,
     }, 'storage')
     expect(result.ok).toBe(true)
     if (result.ok) {
       expect(result.image.file).toBe(optimizedFile)
-      expect(result.image.width).toBe(1800)
-      expect(result.image.height).toBe(1125)
+      expect(result.image.width).toBe(1200)
+      expect(result.image.height).toBe(800)
       expect(result.image.size).toBe(1024)
       expect(result.image.optimized).toBe(true)
       expect(result.image.originalSize).toBe(4 * 1024 * 1024)
@@ -292,8 +293,8 @@ describe('readImageFile', () => {
       ok: true,
       image: {
         file: optimizedFile,
-        width: 1800,
-        height: 1200,
+        width: 1200,
+        height: 800,
         size: 2048,
         contentType: 'image/jpeg',
       },
@@ -307,8 +308,8 @@ describe('readImageFile', () => {
     expect(compressionMocks.compressImage).toHaveBeenCalledTimes(1)
     expect(result.ok).toBe(true)
     if (result.ok) {
-      expect(result.image.width).toBe(1800)
-      expect(result.image.height).toBe(1200)
+      expect(result.image.width).toBe(1200)
+      expect(result.image.height).toBe(800)
       expect(result.image.optimized).toBe(true)
     }
   })
@@ -344,7 +345,7 @@ describe('readImageFile', () => {
   it('returns the optimizer error when the file cannot be reduced', async () => {
     vi.stubGlobal(
       'createImageBitmap',
-      vi.fn(async () => ({ width: 4000, height: 2500, close: vi.fn() })),
+      vi.fn(async () => ({ width: 3000, height: 2000, close: vi.fn() })),
     )
     compressionMocks.compressImage.mockResolvedValue({
       ok: false,

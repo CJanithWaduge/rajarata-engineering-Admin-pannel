@@ -132,7 +132,7 @@ function validateAspect(
 
   if (aspect < rule.minAspect || aspect > rule.maxAspect) {
     return failure(
-      `${rule.label} has an unsupported shape. Use an aspect ratio between ${rule.minAspect.toFixed(2)}:1 and ${rule.maxAspect.toFixed(2)}:1.`,
+      `${rule.label} has an unsupported shape. Use a ${rule.aspectLabel} aspect ratio (${rule.maxWidth} x ${rule.maxHeight} px).`,
     )
   }
 

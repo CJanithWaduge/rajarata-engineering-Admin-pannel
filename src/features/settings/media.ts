@@ -17,7 +17,7 @@ export type SettingsImageFileResult =
 export async function readSettingsImageFile(
   file: File,
 ): Promise<SettingsImageFileResult> {
-  const result = await readImageFile(file, 'hero')
+  const result = await readImageFile(file, 'logo')
   if (!result.ok) return result
 
   return {

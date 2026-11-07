@@ -28,6 +28,8 @@ export type ImageRule = {
   maxHeight: number
   minAspect: number
   maxAspect: number
+  /** Human-readable ratio for the UI hint, e.g. `16:9`. */
+  aspectLabel: string
 }
 
 /**
@@ -39,23 +41,25 @@ export const IMAGE_RULES: Record<ImageKind, ImageRule> = {
     label: 'Hero image',
     maxBytes: 5 * 1024 * 1024,
     maxBytesLabel: '5 MB',
-    minWidth: 1600,
-    minHeight: 1000,
-    maxWidth: 6000,
-    maxHeight: 6000,
-    minAspect: 1.2,
-    maxAspect: 2,
+    minWidth: 1920,
+    minHeight: 1080,
+    maxWidth: 1920,
+    maxHeight: 1080,
+    minAspect: 16 / 9,
+    maxAspect: 16 / 9,
+    aspectLabel: '16:9',
   },
   card: {
     label: 'Project image',
     maxBytes: 3 * 1024 * 1024,
     maxBytesLabel: '3 MB',
-    minWidth: 1000,
-    minHeight: 700,
-    maxWidth: 4000,
-    maxHeight: 4000,
-    minAspect: 1.4,
-    maxAspect: 1.9,
+    minWidth: 1200,
+    minHeight: 800,
+    maxWidth: 1200,
+    maxHeight: 800,
+    minAspect: 3 / 2,
+    maxAspect: 3 / 2,
+    aspectLabel: '3:2',
   },
   logo: {
     label: 'Logo image',
@@ -67,6 +71,7 @@ export const IMAGE_RULES: Record<ImageKind, ImageRule> = {
     maxHeight: 1080,
     minAspect: 1,
     maxAspect: 1,
+    aspectLabel: '1:1',
   },
 }
 
@@ -81,12 +86,20 @@ export const MAX_SOURCE_PIXELS = 60_000_000
 export const MAX_SOURCE_PIXELS_LABEL = '60 megapixels'
 
 /**
+ * One hint line for every image field, so the slot limits read the same on the
+ * Home, About, Projects, and Settings pages.
+ */
+export function imageRuleHint(rule: ImageRule): string {
+  return `Exactly ${rule.maxWidth} × ${rule.maxHeight} px (${rule.aspectLabel}) · JPEG, PNG or WebP · source up to ${MAX_SOURCE_BYTES_LABEL} · large files are optimized automatically.`
+}
+
+/**
  * Downscale ceiling for optimized uploads. The public cards render at roughly
  * 384 x 224 px, so these keep retina quality without storing camera-sized files.
  */
 export const COMPRESSION_TARGETS: Record<ImageKind, { maxWidth: number; maxHeight: number }> = {
-  hero: { maxWidth: 2400, maxHeight: 1600 },
-  card: { maxWidth: 1800, maxHeight: 1200 },
+  hero: { maxWidth: 1920, maxHeight: 1080 },
+  card: { maxWidth: 1200, maxHeight: 800 },
   logo: { maxWidth: 1080, maxHeight: 1080 },
 }
 
@@ -116,8 +129,8 @@ export const INLINE_IMAGE_TARGETS: Record<
   ImageKind,
   { maxWidth: number; maxHeight: number }
 > = {
-  hero: { maxWidth: 1600, maxHeight: 1200 },
-  card: { maxWidth: 1200, maxHeight: 900 },
+  hero: { maxWidth: 1920, maxHeight: 1080 },
+  card: { maxWidth: 1200, maxHeight: 800 },
   logo: { maxWidth: 1080, maxHeight: 1080 },
 }
 
