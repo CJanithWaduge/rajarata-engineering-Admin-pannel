@@ -1,5 +1,7 @@
 import { getAboutContent, saveAboutContent } from '../about/aboutContentService'
 import { SEED_ABOUT } from '../about/seed-data'
+import { getHomeContent, saveHomeContent } from '../home/homeContentService'
+import { seedHomeDraft } from '../home/seed-data'
 import { PROJECT_COUNT } from '../projects/constants'
 import {
   getProjectsContent,
@@ -9,6 +11,7 @@ import { SEED_PROJECTS } from '../projects/seed-data'
 import { saveServicesContent } from '../services/servicesContentService'
 import { SEED_SERVICES } from '../services/seed-data'
 import type { AboutContent, AboutDraft } from '../about/types'
+import type { HomeContent } from '../home/types'
 import type { ProjectsContent, ProjectsDraft } from '../projects/types'
 
 export type SeedSummary = {
@@ -18,10 +21,10 @@ export type SeedSummary = {
 
 /**
  * Seeding only covers the pages whose copy is stored as plain text: Services,
- * About, and Projects. Home content is image-led (a card is only hydratable
- * once it has an image), and Settings contact details come from the public
- * site's build-time environment, so neither is written here. Seeding must not
- * overwrite contact numbers with invented placeholder values.
+ * About, Projects, the featured Home project cards, and the six Home service
+ * cards. Home images are retained when present; no media is invented.
+ * Settings contact details come from the public site's build-time environment,
+ * so they are not written here.
  */
 function toAboutDraft(content: AboutContent): AboutDraft {
   const { heritage, visionMission, pillars, methodology, industries, cta, hero } =
@@ -84,8 +87,8 @@ function pageError(page: string, error: unknown): Error {
  * Writes the public site's build-time copy into `site/services`,
  * `site/about`, and `site/projects` through the same validated save functions
  * the admin forms use. Each document is replaced, so the seeded copy is exactly
- * the public page's current wording. Images, Home content, contact details, and
- * the logo are left untouched.
+ * the public page's current wording. Existing Home images, contact details, and
+ * the logo are preserved.
  */
 export async function seedAllContent(uid: string): Promise<SeedSummary> {
   if (uid.trim() === '') {
@@ -99,6 +102,19 @@ export async function seedAllContent(uid: string): Promise<SeedSummary> {
     pages.push('Services')
   } catch (error) {
     throw pageError('Services', error)
+  }
+
+  let previousHome: HomeContent | null
+  try {
+    previousHome = (await getHomeContent()).content
+  } catch (error) {
+    throw pageError('Home', error)
+  }
+  try {
+    await saveHomeContent(seedHomeDraft(previousHome), uid, previousHome)
+    pages.push('Home')
+  } catch (error) {
+    throw pageError('Home', error)
   }
 
   const previousAbout = await previousOrNull<AboutContent>(getAboutContent)

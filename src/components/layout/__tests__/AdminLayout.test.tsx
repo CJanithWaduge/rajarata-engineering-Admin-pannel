@@ -45,6 +45,11 @@ describe('AdminLayout', () => {
   it('renders the sidebar navigation and the active page', () => {
     renderLayout()
 
+    const logos = screen.getAllByRole('img', { name: 'Rajarata Engineering' })
+    expect(logos.length).toBeGreaterThan(0)
+    logos.forEach((logo) => {
+      expect(logo).toHaveAttribute('viewBox', '0 0 240 50')
+    })
     expect(screen.getByRole('navigation', { name: 'Admin' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute(
       'aria-current',

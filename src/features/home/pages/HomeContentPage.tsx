@@ -36,8 +36,9 @@ export function HomeContentPage() {
           Home Page Settings
         </h1>
         <p className="mt-2 font-body-md text-body-md text-secondary">
-          The hero image and the three Featured Engineering Projects cards on the public
-          Home page. Changes go live immediately after saving.
+          The hero image, the three Featured Engineering Projects cards, and the six
+          &quot;Our Electrical Services&quot; cards on the public Home page. Changes go
+          live immediately after saving.
         </p>
       </header>
 

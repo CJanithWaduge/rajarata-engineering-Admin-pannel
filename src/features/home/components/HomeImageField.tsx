@@ -97,7 +97,9 @@ export function HomeImageField({
         </p>
       ) : (
         <p className="font-body-sm text-body-sm text-secondary">
-          {`${imageRuleHint(rule)}${inlineHint}`}
+          {kind === 'card'
+            ? `Optional for featured projects; the public illustration stays visible until you upload a photo. ${imageRuleHint(rule)}${inlineHint}`
+            : `${imageRuleHint(rule)}${inlineHint}`}
         </p>
       )}
     </div>

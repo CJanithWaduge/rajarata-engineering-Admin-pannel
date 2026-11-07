@@ -18,6 +18,7 @@ import { useHomeContent } from '../useHomeContent'
 const DRAFT: HomeDraft = {
   hero: { image: { kind: 'none' }, alt: '' },
   cards: [],
+  services: [],
 }
 
 const SAVED: HomeContent = {
@@ -31,6 +32,7 @@ const SAVED: HomeContent = {
     contentType: 'image/jpeg',
   },
   featuredProjects: [],
+  featuredServices: [],
   updatedAt: null,
   updatedBy: 'uid-1',
 }

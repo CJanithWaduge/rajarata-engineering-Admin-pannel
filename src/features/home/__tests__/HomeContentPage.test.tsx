@@ -80,6 +80,44 @@ function content(): HomeContent {
         tag: 'Automation',
       },
     ],
+    featuredServices: [
+      {
+        icon: 'home_repair_service',
+        title: 'Residential & Commercial Wiring',
+        description: 'Complete wiring for homes and offices.',
+        href: '/services#service-01',
+      },
+      {
+        icon: 'precision_manufacturing',
+        title: 'Industrial Electrical Installations',
+        description: 'High-demand manufacturing floor power drops.',
+        href: '/services#service-02',
+      },
+      {
+        icon: 'assignment_turned_in',
+        title: 'Testing & Commissioning',
+        description: 'Insulation resistance and loop impedance checks.',
+        href: '/services#service-05',
+      },
+      {
+        icon: 'build_circle',
+        title: 'Maintenance & Troubleshooting',
+        description: 'Fault finding and preventive upkeep of LV systems.',
+        href: '/services#service-06',
+      },
+      {
+        icon: 'lan',
+        title: 'All Kinds of ELV Solutions',
+        description: 'Structured cabling, access control, and CCTV networks.',
+        href: '/services#service-07',
+      },
+      {
+        icon: 'bolt',
+        title: 'Lightning Protection System (LPS)',
+        description: 'ESE and conventional air terminal networks.',
+        href: '/services#service-08',
+      },
+    ],
     updatedAt: null,
     updatedBy: null,
   }

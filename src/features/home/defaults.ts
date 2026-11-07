@@ -1,10 +1,11 @@
-import { CARD_COUNT } from './constants'
+import { CARD_COUNT, HOME_SERVICE_COUNT } from './constants'
 import type {
   CardDraft,
   FeaturedProject,
   HomeContent,
   HomeDraft,
   HomeImage,
+  HomeService,
   ImageSelection,
 } from './types'
 
@@ -39,10 +40,15 @@ export function createEmptyCard(): CardDraft {
   }
 }
 
+export function createEmptyService(): HomeService {
+  return { icon: '', title: '', description: '', href: '' }
+}
+
 export function createEmptyDraft(): HomeDraft {
   return {
     hero: { image: { kind: 'none' }, alt: '' },
     cards: Array.from({ length: CARD_COUNT }, createEmptyCard),
+    services: Array.from({ length: HOME_SERVICE_COUNT }, createEmptyService),
   }
 }
 
@@ -71,6 +77,17 @@ export function draftFromContent(content: HomeContent | null): HomeDraft {
         venue: project.venue,
         topic: project.topic,
         tag: project.tag,
+      }
+    }),
+    services: Array.from({ length: HOME_SERVICE_COUNT }, (_, index) => {
+      const service = content.featuredServices?.[index]
+      if (!service) return createEmptyService()
+
+      return {
+        icon: service.icon,
+        title: service.title,
+        description: service.description,
+        href: service.href,
       }
     }),
   }

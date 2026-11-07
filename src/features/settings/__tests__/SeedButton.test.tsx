@@ -31,7 +31,7 @@ function stubConfirm(result: boolean) {
 describe('SeedButton', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.seedAllContent.mockResolvedValue({ pages: ['Services', 'About', 'Projects'] })
+    mocks.seedAllContent.mockResolvedValue({ pages: ['Services', 'Home', 'About', 'Projects'] })
   })
 
   it('does nothing when the overwrite confirmation is cancelled', async () => {
@@ -56,7 +56,7 @@ describe('SeedButton', () => {
     expect(mocks.seedAllContent).toHaveBeenCalledWith('uid-1')
     expect(
       await screen.findByText(
-        'Seeded Services, About, Projects. Reload those pages to see the new content.',
+        'Seeded Services, Home, About, Projects. Reload those pages to see the new content.',
       ),
     ).toBeInTheDocument()
     confirm.mockRestore()

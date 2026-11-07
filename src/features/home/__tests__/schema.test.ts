@@ -9,9 +9,17 @@ const CARD = {
   tag: 'MV / LV',
 }
 
+const SERVICE = {
+  icon: 'home_repair_service',
+  title: 'Residential & Commercial Wiring',
+  description: 'Complete wiring for homes and offices.',
+  href: '/services#service-01',
+}
+
 const HOME = {
   heroAlt: 'A technician at an electrical distribution panel',
   cards: [CARD, CARD, CARD],
+  services: [SERVICE, SERVICE, SERVICE, SERVICE, SERVICE, SERVICE],
 }
 
 describe('cardTextSchema', () => {

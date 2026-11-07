@@ -1,5 +1,7 @@
-import { cardTextSchema, heroTextSchema } from './schema'
-import type { CardDraft, HomeDraft } from './types'
+import { cardTextSchema, heroTextSchema, homeServiceSchema } from './schema'
+import { HOME_SERVICE_COUNT } from './constants'
+import { createEmptyService } from './defaults'
+import type { CardDraft, HomeDraft, HomeService } from './types'
 
 export type HomeDraftValidation = {
   textErrors: Record<string, string>
@@ -73,10 +75,6 @@ export function validateHomeDraft(draft: HomeDraft): HomeDraftValidation {
     })
 
     if (parsed.success) {
-      if (card.image.kind === 'none') {
-        imageErrors[`card-${index}`] =
-          'Choose an image for this card, or clear its fields to leave it blank.'
-      }
       return {
         image: card.image,
         ...parsed.data,
@@ -90,11 +88,6 @@ export function validateHomeDraft(draft: HomeDraft): HomeDraftValidation {
       }
     }
 
-    if (card.image.kind === 'none') {
-      imageErrors[`card-${index}`] =
-        'Choose an image for this card, or clear its fields to leave it blank.'
-    }
-
     return {
       image: card.image,
       alt: card.alt.trim(),
@@ -104,6 +97,35 @@ export function validateHomeDraft(draft: HomeDraft): HomeDraftValidation {
       tag: card.tag.trim(),
     }
   })
+
+  const services: HomeService[] = (draft.services || []).map((service, index) => {
+    const parsed = homeServiceSchema.safeParse({
+      icon: service.icon,
+      title: service.title,
+      description: service.description,
+      href: service.href,
+    })
+
+    if (parsed.success) return parsed.data
+
+    for (const issue of parsed.error.issues) {
+      const field = issue.path[0]
+      if (typeof field === 'string') {
+        textErrors[`services.${index}.${field}`] = issue.message
+      }
+    }
+
+    return {
+      icon: service.icon.trim(),
+      title: service.title.trim(),
+      description: service.description.trim(),
+      href: service.href.trim(),
+    }
+  })
+
+  while (services.length < HOME_SERVICE_COUNT) {
+    services.push(createEmptyService())
+  }
 
   return {
     textErrors,
@@ -115,6 +137,7 @@ export function validateHomeDraft(draft: HomeDraft): HomeDraftValidation {
         alt: heroAlt,
       },
       cards,
+      services,
     },
   }
 }

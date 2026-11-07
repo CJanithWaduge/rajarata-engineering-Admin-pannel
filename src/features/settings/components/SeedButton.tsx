@@ -7,7 +7,7 @@ import { seedAllContent } from '../seedContentService'
 type SeedState = 'idle' | 'saving' | 'success' | 'error'
 
 const CONFIRM_MESSAGE =
-  'Seed Services, About, and Projects with the public site copy? This replaces the text in those three pages. Images, Home content, and contact details are not changed.'
+  'Seed Services, About, Projects, and Home content with the public site copy? This replaces the text in those pages, including the three featured Home project cards and six Home service cards. Existing Home images, contact details, and the site logo are preserved.'
 
 export function SeedButton() {
   const { admin } = useAuth()
@@ -44,13 +44,15 @@ export function SeedButton() {
       </header>
       <div className="flex flex-col gap-3 px-6 py-5">
         <p className="font-body-sm text-body-sm text-secondary">
-          Copies the public site&apos;s built-in Services, About, and Projects copy
-          into Firestore so it can be edited here. Use this once on a new project,
-          or to reset those pages to their original wording.
+          Copies the public site&apos;s built-in Services, About, and Projects copy,
+          plus the three featured Home project cards and six Home service cards,
+          into Firestore so they can be edited here. Use this once on a new
+          project, or to reset those pages to their original wording.
         </p>
         <p className="font-body-sm text-body-sm text-secondary">
-          It does not touch Home images, the site logo, or contact details. Those
-          stay where they are.
+          Existing Home images (hero and featured projects), the site logo, and
+          contact details are preserved. Public fallback illustrations remain
+          until you upload project photos.
         </p>
         <div>
           <Button

@@ -4,13 +4,17 @@ import { Button } from '../../../components/ui/Button'
 import { CollapsibleSection } from '../../../components/ui/CollapsibleSection'
 import { TextField } from '../../../components/ui/TextField'
 import { UnsavedChangesGuard } from '../../../components/ui/UnsavedChangesGuard'
-import { CARD_COUNT, type ImageKind } from '../constants'
+import { CARD_COUNT, HOME_SERVICE_COUNT, type ImageKind } from '../constants'
 import { draftFromContent } from '../defaults'
 import { formatBytes, readImageFile } from '../imageValidation'
 import { validateHomeDraft } from '../validation'
 import type { CardTextField, HomeContent, HomeDraft, NewImage } from '../types'
 import { FeaturedProjectEditor } from './FeaturedProjectEditor'
 import { HomeImageField } from './HomeImageField'
+import {
+  HomeServiceEditor,
+  type HomeServiceTextField,
+} from './HomeServiceEditor'
 
 type Props = {
   initial: HomeContent | null
@@ -21,8 +25,12 @@ type Props = {
 
 function textFieldId(path: string): string {
   if (path === 'heroAlt') return 'home-hero-alt'
-  const match = /^cards\.(\d+)\.(\w+)$/.exec(path)
-  return match ? `home-card-${match[1]}-${match[2]}` : ''
+
+  const cardMatch = /^cards\.(\d+)\.(\w+)$/.exec(path)
+  if (cardMatch) return `home-card-${cardMatch[1]}-${cardMatch[2]}`
+
+  const serviceMatch = /^services\.(\d+)\.(\w+)$/.exec(path)
+  return serviceMatch ? `home-service-${serviceMatch[1]}-${serviceMatch[2]}` : ''
 }
 
 function imageMeta(draft: HomeDraft['hero']): string | null {
@@ -60,6 +68,9 @@ export function HomeContentForm({
   const [openCards, setOpenCards] = useState<boolean[]>(() =>
     Array.from({ length: CARD_COUNT }, () => false),
   )
+  const [openServices, setOpenServices] = useState<boolean[]>(() =>
+    Array.from({ length: HOME_SERVICE_COUNT }, () => false),
+  )
 
   const previews = useRef<Record<string, string>>({})
   const mounted = useRef(true)
@@ -85,6 +96,14 @@ export function HomeContentForm({
   const toggleCard = (index: number) => {
     setOpenCards((current) =>
       current.map((open, cardIndex) => (cardIndex === index ? !open : open)),
+    )
+  }
+
+  const toggleService = (index: number) => {
+    setOpenServices((current) =>
+      current.map((open, serviceIndex) =>
+        serviceIndex === index ? !open : open,
+      ),
     )
   }
 
@@ -168,6 +187,21 @@ export function HomeContentForm({
     setDirty(true)
   }
 
+  const handleServiceChange = (
+    index: number,
+    field: HomeServiceTextField,
+    value: string,
+  ) => {
+    setDraft((current) => ({
+      ...current,
+      services: current.services.map((service, serviceIndex) =>
+        serviceIndex === index ? { ...service, [field]: value } : service,
+      ),
+    }))
+    clearTextError(`services.${index}.${field}`)
+    setDirty(true)
+  }
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
@@ -193,6 +227,18 @@ export function HomeContentForm({
         current.map((open, index) => open || cardErrorIndexes.has(index)),
       )
     }
+
+    const serviceErrorIndexes = new Set<number>()
+    for (const path of Object.keys(nextTextErrors)) {
+      const match = /^services\.(\d+)\./.exec(path)
+      if (match) serviceErrorIndexes.add(Number(match[1]))
+    }
+    if (serviceErrorIndexes.size > 0) {
+      setOpenServices((current) =>
+        current.map((open, index) => open || serviceErrorIndexes.has(index)),
+      )
+    }
+
     if (nextTextErrors.heroAlt || nextImageErrors.hero) {
       setHeroOpen(true)
     }
@@ -294,6 +340,32 @@ export function HomeContentForm({
             onChange={(field: CardTextField, value: string) =>
               handleCardChange(index, field, value)
             }
+          />
+        ))}
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <div>
+          <h2 className="font-headline-sm text-headline-sm text-on-surface">
+            Featured Services
+          </h2>
+          <p className="mt-1 font-body-md text-body-md text-secondary">
+            The six cards in the Home page&apos;s &quot;Our Electrical Services&quot;
+            grid. Fill only the fields you want to change; blank fields keep the public
+            site&apos;s current content.
+          </p>
+        </div>
+
+        {draft.services.map((service, index) => (
+          <HomeServiceEditor
+            key={index}
+            index={index}
+            service={service}
+            errors={textErrors}
+            disabled={isSaving}
+            open={openServices[index] ?? true}
+            onToggle={() => toggleService(index)}
+            onChange={(field, value) => handleServiceChange(index, field, value)}
           />
         ))}
       </section>

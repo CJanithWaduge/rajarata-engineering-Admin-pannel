@@ -19,9 +19,21 @@ export type FeaturedProject = {
   tag: string
 }
 
+/**
+ * One Home page "Our Electrical Services" card. Every field is optional: a
+ * blank value keeps the public page's build-time copy for that field.
+ */
+export type HomeService = {
+  icon: string
+  title: string
+  description: string
+  href: string
+}
+
 export type HomeContent = {
   hero: HomeImage
   featuredProjects: FeaturedProject[]
+  featuredServices: HomeService[]
   updatedAt: Date | null
   updatedBy: string | null
 }
@@ -70,6 +82,7 @@ export type HomeDraft = {
     alt: string
   }
   cards: CardDraft[]
+  services: HomeService[]
 }
 
 export type HomeStatus = 'loading' | 'ready' | 'saving' | 'error'

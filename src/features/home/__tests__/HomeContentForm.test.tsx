@@ -58,6 +58,44 @@ function content(): HomeContent {
         tag: 'Automation',
       },
     ],
+    featuredServices: [
+      {
+        icon: 'home_repair_service',
+        title: 'Residential & Commercial Wiring',
+        description: 'Complete wiring for homes and offices.',
+        href: '/services#service-01',
+      },
+      {
+        icon: 'precision_manufacturing',
+        title: 'Industrial Electrical Installations',
+        description: 'High-demand manufacturing floor power drops.',
+        href: '/services#service-02',
+      },
+      {
+        icon: 'assignment_turned_in',
+        title: 'Testing & Commissioning',
+        description: 'Insulation resistance and loop impedance checks.',
+        href: '/services#service-05',
+      },
+      {
+        icon: 'build_circle',
+        title: 'Maintenance & Troubleshooting',
+        description: 'Fault finding and preventive upkeep of LV systems.',
+        href: '/services#service-06',
+      },
+      {
+        icon: 'lan',
+        title: 'All Kinds of ELV Solutions',
+        description: 'Structured cabling, access control, and CCTV networks.',
+        href: '/services#service-07',
+      },
+      {
+        icon: 'bolt',
+        title: 'Lightning Protection System (LPS)',
+        description: 'ESE and conventional air terminal networks.',
+        href: '/services#service-08',
+      },
+    ],
     updatedAt: null,
     updatedBy: null,
   }
@@ -321,7 +359,7 @@ describe('HomeContentForm', () => {
     expect(document.querySelector('img[src="blob:new-hero"]')).not.toBeInTheDocument()
   })
 
-  it('blocks a save when a card has no image', async () => {
+  it('allows seeded project copy to save without uploaded images', async () => {
     const user = userEvent.setup()
     const partial = content()
     partial.featuredProjects[2] = {
@@ -332,14 +370,10 @@ describe('HomeContentForm', () => {
 
     await user.click(screen.getByRole('button', { name: 'Expand Card 1' }))
     const venues = screen.getAllByLabelText('Venue')
-    await user.type(venues[0], ' ')
+    await user.type(venues[0], ' Kandy')
     await user.click(screen.getByRole('button', { name: 'Save changes' }))
 
-    expect(
-      await screen.findByText(/Choose an image for this card/),
-    ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Collapse Card 3' })).toBeInTheDocument()
-    expect(mocks.onSubmit).not.toHaveBeenCalled()
+    expect(mocks.onSubmit).toHaveBeenCalledTimes(1)
   })
 
   it('renders a blank form when there is no stored document', () => {

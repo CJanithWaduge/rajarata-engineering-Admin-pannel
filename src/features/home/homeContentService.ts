@@ -6,8 +6,14 @@ import {
   Timestamp,
 } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
-import { CARD_COUNT, INLINE_MEDIA_DOC_BUDGET } from './constants'
-import { EMPTY_IMAGE, emptyProject } from './defaults'
+import {
+  CARD_COUNT,
+  HOME_SERVICE_COUNT,
+  INLINE_MEDIA_DOC_BUDGET,
+  isHomeServiceHref,
+  isHomeServiceIcon,
+} from './constants'
+import { EMPTY_IMAGE, createEmptyService, emptyProject } from './defaults'
 import { HomeError, logHomeError, toHomeError } from './errors'
 import { toInlineImage } from './inlineMedia'
 import { INLINE_MEDIA_ENABLED } from './mediaMode'
@@ -18,6 +24,7 @@ import type {
   HomeContent,
   HomeDraft,
   HomeImage,
+  HomeService,
   ImageSelection,
 } from './types'
 
@@ -59,6 +66,19 @@ function readProject(value: unknown): FeaturedProject {
   }
 }
 
+function readService(value: unknown): HomeService {
+  const record = isRecord(value) ? value : {}
+  const icon = readString(record.icon)
+  const href = readString(record.href)
+
+  return {
+    icon: isHomeServiceIcon(icon) ? icon : '',
+    title: readString(record.title),
+    description: readString(record.description),
+    href: isHomeServiceHref(href) ? href : '',
+  }
+}
+
 /**
  * The document deliberately stores image metadata flat on the card and with an
  * `image*` prefix. Both this panel and the public site read that shape, and
@@ -96,12 +116,21 @@ function toHomeContent(data: Record<string, unknown>): HomeContent {
     rawProjects.push(emptyProject())
   }
 
+  const rawServices = Array.isArray(data.featuredServices)
+    ? data.featuredServices.slice(0, HOME_SERVICE_COUNT).map(readService)
+    : []
+
+  while (rawServices.length < HOME_SERVICE_COUNT) {
+    rawServices.push(createEmptyService())
+  }
+
   const updatedAtValue = data.updatedAt
   const updatedByValue = data.updatedBy
 
   return {
     hero: readImage(data.hero),
     featuredProjects: rawProjects,
+    featuredServices: rawServices,
     updatedAt: updatedAtValue instanceof Timestamp ? updatedAtValue.toDate() : null,
     updatedBy: typeof updatedByValue === 'string' ? updatedByValue : null,
   }
@@ -190,6 +219,7 @@ export async function saveHomeContent(
     { length: CARD_COUNT },
     () => emptyProject(),
   )
+  const services = normalized.services.map((service) => ({ ...service }))
 
   try {
     // Start every upload in the same tick. Awaiting hero -> card 1 -> card 2 ->
@@ -225,7 +255,14 @@ export async function saveHomeContent(
       }
 
       if (card.image.kind === 'none') {
-        throw new HomeError('validation', `Choose an image for card ${index + 1}.`)
+        projects[index] = {
+          image: { ...EMPTY_IMAGE, alt: card.alt },
+          category: card.category,
+          venue: card.venue,
+          topic: card.topic,
+          tag: card.tag,
+        }
+        continue
       }
 
       jobs.push(
@@ -267,6 +304,7 @@ export async function saveHomeContent(
     await setDoc(HOME_REF, {
       hero: toDocImage(heroImage),
       featuredProjects: projects.map(toDocProject),
+      featuredServices: services,
       updatedAt: serverTimestamp(),
       updatedBy: uid,
     })
@@ -291,6 +329,7 @@ export async function saveHomeContent(
     return {
       hero: heroImage,
       featuredProjects: projects,
+      featuredServices: services,
       updatedAt: new Date(),
       updatedBy: uid,
     }

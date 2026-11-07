@@ -49,13 +49,14 @@ describe('validateHomeDraft', () => {
     expect(result.normalized.cards[0]?.image.kind).toBe('none')
   })
 
-  it('reports a card that has text but no image', () => {
+  it('accepts a complete project card without an uploaded image', () => {
     const draft = createEmptyDraft()
     draft.cards[0] = { ...completeCard(), image: { kind: 'none' } }
 
     const result = validateHomeDraft(draft)
 
-    expect(result.imageErrors['card-0']).toMatch(/Choose an image/)
+    expect(result.textErrors).toEqual({})
+    expect(result.imageErrors['card-0']).toBeUndefined()
     expect(result.blankCards[0]).toBe(false)
   })
 

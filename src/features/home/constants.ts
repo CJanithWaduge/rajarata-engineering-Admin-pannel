@@ -2,6 +2,74 @@ import type { ImageContentType } from './types'
 
 export const CARD_COUNT = 3
 
+/** Fixed number of cards in the Home page's "Our Electrical Services" grid. */
+export const HOME_SERVICE_COUNT = 6
+
+/**
+ * Material Symbols names the public Home grid can render. This is the union of
+ * the icons already used by the build-time grid and the Services page
+ * allowlist, so every option is present in the self-hosted icon subset.
+ */
+export const HOME_SERVICE_ICONS = [
+  'home_repair_service',
+  'precision_manufacturing',
+  'assignment_turned_in',
+  'build_circle',
+  'lan',
+  'bolt',
+  'apartment',
+  'developer_board',
+  'linear_scale',
+  'fact_check',
+  'build',
+  'router',
+  'factory',
+  'settings_ethernet',
+] as const
+
+export type HomeServiceIcon = (typeof HOME_SERVICE_ICONS)[number]
+
+/** UI labels only; these are not site copy. */
+export const HOME_SERVICE_ICON_OPTIONS = HOME_SERVICE_ICONS.map((value) => ({
+  value,
+  label: value
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' '),
+}))
+
+/** Internal "Learn More" targets reachable from a Home service card. */
+export const HOME_SERVICE_HREFS = [
+  '/services#service-01',
+  '/services#service-02',
+  '/services#service-03',
+  '/services#service-04',
+  '/services#service-05',
+  '/services#service-06',
+  '/services#service-07',
+  '/services#service-08',
+] as const
+
+export type HomeServiceHref = (typeof HOME_SERVICE_HREFS)[number]
+
+export const HOME_SERVICE_LINK_OPTIONS = HOME_SERVICE_HREFS.map((value) => ({
+  value,
+  label: `Services · Service ${value.slice(-2)}`,
+}))
+
+export function isHomeServiceIcon(value: string): value is HomeServiceIcon {
+  return (HOME_SERVICE_ICONS as readonly string[]).includes(value)
+}
+
+export function isHomeServiceHref(value: string): value is HomeServiceHref {
+  return (HOME_SERVICE_HREFS as readonly string[]).includes(value)
+}
+
+export const HOME_SERVICE_TEXT_LIMITS = {
+  title: 80,
+  description: 320,
+} as const
+
 export const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'] as const
 
 export const ALLOWED_CONTENT_TYPES: ImageContentType[] = [

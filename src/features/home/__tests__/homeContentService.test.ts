@@ -95,6 +95,44 @@ function storedContent(): HomeContent {
         tag: 'Automation',
       },
     ],
+    featuredServices: [
+      {
+        icon: 'home_repair_service',
+        title: 'Residential & Commercial Wiring',
+        description: 'Complete wiring for homes and offices.',
+        href: '/services#service-01',
+      },
+      {
+        icon: 'precision_manufacturing',
+        title: 'Industrial Electrical Installations',
+        description: 'High-demand manufacturing floor power drops.',
+        href: '/services#service-02',
+      },
+      {
+        icon: 'assignment_turned_in',
+        title: 'Testing & Commissioning',
+        description: 'Insulation resistance and loop impedance checks.',
+        href: '/services#service-05',
+      },
+      {
+        icon: 'build_circle',
+        title: 'Maintenance & Troubleshooting',
+        description: 'Fault finding and preventive upkeep of LV systems.',
+        href: '/services#service-06',
+      },
+      {
+        icon: 'lan',
+        title: 'All Kinds of ELV Solutions',
+        description: 'Structured cabling, access control, and CCTV networks.',
+        href: '/services#service-07',
+      },
+      {
+        icon: 'bolt',
+        title: 'Lightning Protection System (LPS)',
+        description: 'ESE and conventional air terminal networks.',
+        href: '/services#service-08',
+      },
+    ],
     updatedAt: null,
     updatedBy: null,
   }
@@ -110,6 +148,12 @@ function draftFrom(content: HomeContent): HomeDraft {
       venue: project.venue,
       topic: project.topic,
       tag: project.tag,
+    })),
+    services: content.featuredServices.map((service) => ({
+      icon: service.icon,
+      title: service.title,
+      description: service.description,
+      href: service.href,
     })),
   }
 }
@@ -374,15 +418,24 @@ describe('saveHomeContent', () => {
     expect(mocks.uploadHomeImage).not.toHaveBeenCalled()
   })
 
-  it('rejects a missing card image', async () => {
+  it('writes complete card copy and clears its image when explicitly removed', async () => {
     const previous = storedContent()
     const draft = draftFrom(previous)
     draft.cards[2] = { ...draft.cards[2], image: { kind: 'none' } }
 
-    await expect(saveHomeContent(draft, 'uid-1', previous)).rejects.toMatchObject({
-      code: 'validation',
-    })
+    const saved = await saveHomeContent(draft, 'uid-1', previous)
+
     expect(mocks.uploadHomeImage).not.toHaveBeenCalled()
+    expect(mocks.setDoc).toHaveBeenCalledTimes(1)
+    const payload = mocks.setDoc.mock.calls[0]?.[1] as {
+      featuredProjects: Array<{ imageUrl: string; topic: string }>
+    }
+    expect(payload.featuredProjects[2]).toMatchObject({
+      imageUrl: '',
+      topic: 'ELV Systems',
+    })
+    expect(saved.featuredProjects[2]?.image.url).toBe('')
+    expect(mocks.deleteHomeObject).toHaveBeenCalledWith('home/card-3-old')
   })
 
   it('writes blank slots when only one card is saved', async () => {
@@ -417,6 +470,41 @@ describe('saveHomeContent', () => {
     expect(payload.featuredProjects[2]?.imageUrl).toBe('')
     expect(saved.hero.url).toBe('')
     expect(saved.featuredProjects[0]?.category).toBe('Industrial')
+  })
+
+  it('saves complete project copy without an uploaded image', async () => {
+    const draft = createEmptyDraft()
+    draft.cards[0] = {
+      image: { kind: 'none' },
+      alt: 'Illustration of an industrial electrical distribution installation',
+      category: 'Industrial',
+      venue: 'Anuradhapura, Sri Lanka',
+      topic: 'Industrial Power Distribution & Installations',
+      tag: 'MV / LV',
+    }
+
+    const saved = await saveHomeContent(draft, 'uid-1', null)
+
+    expect(mocks.uploadHomeImage).not.toHaveBeenCalled()
+    const payload = mocks.setDoc.mock.calls[0]?.[1] as {
+      featuredProjects: Array<{
+        imageUrl: string
+        imageAlt: string
+        category: string
+        topic: string
+      }>
+    }
+    expect(payload.featuredProjects[0]).toMatchObject({
+      imageUrl: '',
+      imageAlt:
+        'Illustration of an industrial electrical distribution installation',
+      category: 'Industrial',
+      topic: 'Industrial Power Distribution & Installations',
+    })
+    expect(saved.featuredProjects[0]?.image.url).toBe('')
+    expect(saved.featuredProjects[0]?.topic).toBe(
+      'Industrial Power Distribution & Installations',
+    )
   })
 
   it('uploads only the hero when the cards are blank', async () => {
