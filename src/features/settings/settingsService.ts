@@ -1,6 +1,6 @@
 import {
   doc,
-  getDoc,
+  getDocFromServer,
   serverTimestamp,
   setDoc,
   Timestamp,
@@ -38,6 +38,8 @@ function toSiteSettings(data: Record<string, unknown> | undefined): SiteSettings
         ? read('facebookLabel') as string
         : '',
     location: typeof read('location') === 'string' ? read('location') as string : '',
+    mapEmbedUrl:
+      typeof read('mapEmbedUrl') === 'string' ? read('mapEmbedUrl') as string : '',
     logoUrl: typeof read('logoUrl') === 'string' ? read('logoUrl') as string : '',
     logoAlt: typeof read('logoAlt') === 'string' ? read('logoAlt') as string : '',
     logoPath: typeof read('logoPath') === 'string' ? read('logoPath') as string : '',
@@ -61,6 +63,7 @@ export interface SiteSettings {
   facebookUrl: string
   facebookLabel: string
   location: string
+  mapEmbedUrl: string
   logoUrl: string
   logoAlt: string
   logoPath: string
@@ -74,7 +77,7 @@ export interface SiteSettings {
 
 export async function getSettings(): Promise<{ settings: SiteSettings; exists: boolean }> {
   try {
-    const snapshot = await getDoc(SETTINGS_REF)
+    const snapshot = await getDocFromServer(SETTINGS_REF)
     if (!snapshot.exists()) {
       return { settings: emptySettings(), exists: false }
     }
@@ -99,6 +102,7 @@ function emptySettings(): SiteSettings {
     facebookUrl: '',
     facebookLabel: '',
     location: '',
+    mapEmbedUrl: '',
     logoUrl: '',
     logoAlt: '',
     logoPath: '',
@@ -216,6 +220,7 @@ export async function saveSettings(
         facebookUrl: values.facebookUrl,
         facebookLabel: values.facebookLabel,
         location: values.location,
+        mapEmbedUrl: values.mapEmbedUrl,
         logoUrl: resolved.image.url,
         logoAlt: resolved.image.alt,
         logoPath: resolved.image.path,
@@ -242,6 +247,7 @@ export async function saveSettings(
       facebookUrl: values.facebookUrl,
       facebookLabel: values.facebookLabel,
       location: values.location,
+      mapEmbedUrl: values.mapEmbedUrl,
       logoUrl: resolved.image.url,
       logoAlt: resolved.image.alt,
       logoPath: resolved.image.path,

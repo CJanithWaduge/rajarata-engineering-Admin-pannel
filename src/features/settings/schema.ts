@@ -1,4 +1,9 @@
 import { z } from 'zod'
+import {
+  MAP_EMBED_MAX_LENGTH,
+  extractGoogleMapEmbedUrl,
+  isGoogleMapEmbedUrl,
+} from './mapEmbed'
 import type { SettingsFormValues } from './types'
 
 const phoneSchema = z
@@ -56,6 +61,17 @@ const locationSchema = z
   .transform((value) => value.trim())
   .refine((value) => value.length <= 80, { message: 'Location label is too long.' })
 
+const mapEmbedSchema = z
+  .string()
+  .transform((value) => extractGoogleMapEmbedUrl(value))
+  .refine((value) => value.length <= MAP_EMBED_MAX_LENGTH, {
+    message: 'The Google Maps embed URL is too long.',
+  })
+  .refine((value) => value === '' || isGoogleMapEmbedUrl(value), {
+    message:
+      'Paste the Google Maps embed code, or its https://www.google.com/maps/embed?... URL, or leave it empty.',
+  })
+
 const logoAltSchema = z
   .string()
   .transform((value) => value.trim())
@@ -71,6 +87,7 @@ export const settingsSchema = z.object({
   facebookUrl: facebookUrlSchema,
   facebookLabel: facebookLabelSchema,
   location: locationSchema,
+  mapEmbedUrl: mapEmbedSchema,
   logoAlt: logoAltSchema,
 })
 
@@ -89,6 +106,7 @@ export function normaliseSettings(input: SettingsFormValues): SettingsFormValues
     facebookUrl: input.facebookUrl.trim(),
     facebookLabel: input.facebookLabel.trim(),
     location: input.location.trim(),
+    mapEmbedUrl: extractGoogleMapEmbedUrl(input.mapEmbedUrl),
     logoAlt: input.logoAlt.trim(),
   }
 }

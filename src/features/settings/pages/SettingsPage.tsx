@@ -26,6 +26,7 @@ export function SettingsPage() {
     facebookUrl: settings.facebookUrl,
     facebookLabel: settings.facebookLabel,
     location: settings.location,
+    mapEmbedUrl: settings.mapEmbedUrl,
     logoAlt: settings.logoAlt,
   }
 
@@ -68,34 +69,38 @@ export function SettingsPage() {
         </Alert>
       ) : null}
 
-      {!exists ? <SettingsEmptyState /> : null}
+      {status === 'ready' || status === 'saving' ? (
+        <>
+          {!exists ? <SettingsEmptyState /> : null}
 
-      <SettingsForm
-        defaultValues={defaultValues}
-        initialLogo={
-          settings.logoUrl
-            ? {
-                kind: 'stored',
-                image: {
-                  url: settings.logoUrl,
-                  path: settings.logoPath,
-                  alt: settings.logoAlt,
-                  width: settings.logoWidth,
-                  height: settings.logoHeight,
-                  size: settings.logoSize,
-                  contentType: settings.logoContentType,
-                },
-              }
-            : { kind: 'none' }
-        }
-        onSubmit={handleSave}
-        isSaving={status === 'saving'}
-        errorMessage={status === 'ready' && error ? error : null}
-      />
+          <SettingsForm
+            defaultValues={defaultValues}
+            initialLogo={
+              settings.logoUrl
+                ? {
+                    kind: 'stored',
+                    image: {
+                      url: settings.logoUrl,
+                      path: settings.logoPath,
+                      alt: settings.logoAlt,
+                      width: settings.logoWidth,
+                      height: settings.logoHeight,
+                      size: settings.logoSize,
+                      contentType: settings.logoContentType,
+                    },
+                  }
+                : { kind: 'none' }
+            }
+            onSubmit={handleSave}
+            isSaving={status === 'saving'}
+            errorMessage={status === 'ready' && error ? error : null}
+          />
 
-      <SeedButton />
+          <SeedButton />
 
-      <UnsavedChangesGuard when={dirty && status === 'ready'} />
+          <UnsavedChangesGuard when={dirty && status === 'ready'} />
+        </>
+      ) : null}
 
       {success ? <Toast message={success} onDismiss={() => setSuccess(null)} /> : null}
     </div>

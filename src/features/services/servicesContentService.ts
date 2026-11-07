@@ -1,6 +1,6 @@
 import {
   doc,
-  getDoc,
+  getDocFromServer,
   serverTimestamp,
   setDoc,
   Timestamp,
@@ -40,7 +40,7 @@ export async function getServicesContent(): Promise<{
   exists: boolean
 }> {
   try {
-    const snapshot = await getDoc(SERVICES_REF)
+    const snapshot = await getDocFromServer(SERVICES_REF)
     if (!snapshot.exists()) {
       return { content: null, exists: false }
     }

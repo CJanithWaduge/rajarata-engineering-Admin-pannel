@@ -14,7 +14,10 @@ const firestoreMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('firebase/auth', () => authMocks)
-vi.mock('firebase/firestore', () => firestoreMocks)
+vi.mock('firebase/firestore', () => ({
+  doc: firestoreMocks.doc,
+  getDocFromServer: firestoreMocks.getDoc,
+}))
 vi.mock('../../../lib/firebase', () => ({
   auth: { name: 'auth' },
   db: { name: 'db' },

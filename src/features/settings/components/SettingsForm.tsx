@@ -5,6 +5,7 @@ import type { SettingsFormValues } from '../types'
 import { SETTINGS_FIELDS } from '../defaults'
 import { settingsSchema } from '../schema'
 import { Button } from '../../../components/ui/Button'
+import { TextArea } from '../../../components/ui/TextArea'
 import { TextField } from '../../../components/ui/TextField'
 import { Alert } from '../../../components/ui/Alert'
 import { SettingsFieldGroup } from './SettingsFieldGroup'
@@ -152,6 +153,33 @@ export function SettingsForm({
 
   const dirty = isDirty || isImageDirty
 
+  const renderField = (field: (typeof SETTINGS_FIELDS)[number]) => (
+    <div key={field.key} className={field.type === 'textarea' ? 'sm:col-span-2' : undefined}>
+      {field.type === 'textarea' ? (
+        <TextArea
+          {...register(field.key)}
+          label={field.label}
+          placeholder={field.placeholder}
+          hint={field.hint}
+          rows={3}
+          error={errors[field.key]?.message}
+          disabled={isSaving}
+        />
+      ) : (
+        <TextField
+          {...register(field.key)}
+          label={field.label}
+          placeholder={field.placeholder}
+          autoComplete={field.autocomplete}
+          hint={field.hint}
+          error={errors[field.key]?.message}
+          disabled={isSaving}
+          tone="light"
+        />
+      )}
+    </div>
+  )
+
   return (
     <form className="flex flex-col gap-6" onSubmit={submit} noValidate>
       {errorMessage ? (
@@ -187,52 +215,15 @@ export function SettingsForm({
       </SettingsFieldGroup>
 
       <SettingsFieldGroup title="Contact">
-        {SETTINGS_FIELDS.filter((field) => field.group === 'contact').map((field) => (
-          <div key={field.key} className={field.type === 'textarea' ? 'sm:col-span-2' : undefined}>
-            <TextField
-              {...register(field.key)}
-              label={field.label}
-              placeholder={field.placeholder}
-              autoComplete={field.autocomplete}
-              hint={field.hint}
-              error={errors[field.key]?.message}
-              tone="light"
-              {...(field.type === 'textarea' ? { multiline: true, rows: 3 } : {})}
-            />
-          </div>
-        ))}
+        {SETTINGS_FIELDS.filter((field) => field.group === 'contact').map(renderField)}
       </SettingsFieldGroup>
 
       <SettingsFieldGroup title="Location">
-        {SETTINGS_FIELDS.filter((field) => field.group === 'location').map((field) => (
-          <div key={field.key} className={field.type === 'textarea' ? 'sm:col-span-2' : undefined}>
-            <TextField
-              {...register(field.key)}
-              label={field.label}
-              placeholder={field.placeholder}
-              hint={field.hint}
-              error={errors[field.key]?.message}
-              tone="light"
-              {...(field.type === 'textarea' ? { multiline: true, rows: 3 } : {})}
-            />
-          </div>
-        ))}
+        {SETTINGS_FIELDS.filter((field) => field.group === 'location').map(renderField)}
       </SettingsFieldGroup>
 
       <SettingsFieldGroup title="Links">
-        {SETTINGS_FIELDS.filter((field) => field.group === 'links').map((field) => (
-          <div key={field.key} className={field.type === 'textarea' ? 'sm:col-span-2' : undefined}>
-            <TextField
-              {...register(field.key)}
-              label={field.label}
-              placeholder={field.placeholder}
-              hint={field.hint}
-              error={errors[field.key]?.message}
-              tone="light"
-              {...(field.type === 'textarea' ? { multiline: true, rows: 3 } : {})}
-            />
-          </div>
-        ))}
+        {SETTINGS_FIELDS.filter((field) => field.group === 'links').map(renderField)}
       </SettingsFieldGroup>
 
       <div className="flex justify-end">

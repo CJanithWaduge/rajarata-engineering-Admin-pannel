@@ -62,6 +62,35 @@ describe('useHomeContent', () => {
     expect(result.current.error).toContain('do not have permission')
   })
 
+  it('ignores an older read that resolves after a newer reload', async () => {
+    let resolveOlderRead!: (value: { content: HomeContent | null; exists: boolean }) => void
+    mocks.getHomeContent
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveOlderRead = resolve
+          }),
+      )
+      .mockResolvedValueOnce({ content: SAVED, exists: true })
+
+    const { result } = renderHook(() => useHomeContent())
+    await waitFor(() => expect(mocks.getHomeContent).toHaveBeenCalledTimes(1))
+
+    await act(async () => {
+      await result.current.reload()
+    })
+
+    expect(result.current.content).toEqual(SAVED)
+    expect(result.current.status).toBe('ready')
+
+    await act(async () => {
+      resolveOlderRead({ content: null, exists: false })
+    })
+
+    expect(result.current.content).toEqual(SAVED)
+    expect(result.current.exists).toBe(true)
+  })
+
   it('ignores a second save while the first is still writing', async () => {
     let resolveSave!: (value: HomeContent) => void
     mocks.saveHomeContent.mockImplementation(

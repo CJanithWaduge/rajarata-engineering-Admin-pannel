@@ -60,6 +60,13 @@ export const SETTINGS_FIELDS: SettingsFieldMeta[] = [
     group: 'location',
   },
   {
+    key: 'mapEmbedUrl',
+    label: 'Google Maps embed',
+    hint: 'Paste the embed code from Google Maps (Share → Embed a map), or just its https://www.google.com/maps/embed?... URL. Leave empty to keep the default map.',
+    type: 'textarea',
+    group: 'location',
+  },
+  {
     key: 'facebookUrl',
     label: 'Facebook page URL',
     hint: 'Full https:// URL to the page.',
@@ -83,5 +90,6 @@ export const EMPTY_FORM_VALUES: SettingsFormValues = {
   facebookUrl: '',
   facebookLabel: '',
   location: '',
+  mapEmbedUrl: '',
   logoAlt: '',
 }

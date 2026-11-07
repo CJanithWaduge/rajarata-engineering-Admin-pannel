@@ -4,6 +4,9 @@ import userEvent from '@testing-library/user-event'
 
 const mocks = vi.hoisted(() => ({
   save: vi.fn(),
+  status: 'ready' as 'loading' | 'ready' | 'saving' | 'error',
+  exists: true,
+  error: null as string | null,
   settings: {
     phone: '',
     whatsapp: '',
@@ -12,6 +15,7 @@ const mocks = vi.hoisted(() => ({
     facebookUrl: '',
     facebookLabel: '',
     location: '',
+    mapEmbedUrl: '',
     logoUrl: '',
     logoAlt: '',
     logoPath: '',
@@ -26,10 +30,10 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('../useSettings', () => ({
   useSettings: () => ({
-    status: 'ready',
+    status: mocks.status,
     settings: mocks.settings,
-    exists: true,
-    error: null,
+    exists: mocks.exists,
+    error: mocks.error,
     reload: vi.fn(),
     save: mocks.save,
   }),
@@ -56,7 +60,25 @@ import { SettingsPage } from '../pages/SettingsPage'
 describe('SettingsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.status = 'ready'
+    mocks.exists = true
+    mocks.error = null
     mocks.save.mockResolvedValue(null)
+  })
+
+  it('does not present an empty form when the initial Firestore read fails', () => {
+    mocks.status = 'error'
+    mocks.exists = false
+    mocks.error = 'Could not load settings'
+
+    render(<SettingsPage />)
+
+    expect(screen.getByText('Could not load settings')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Save changes' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(/No site settings document exists yet/),
+    ).not.toBeInTheDocument()
   })
 
   it('shows a dismissible toast after a save', async () => {

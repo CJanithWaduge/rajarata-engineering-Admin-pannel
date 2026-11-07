@@ -3,7 +3,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
 } from 'firebase/auth'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDocFromServer } from 'firebase/firestore'
 import { auth, db } from '../../lib/firebase'
 import { notAdminError } from './errors'
 import type { AdminProfile, AdminRole } from './types'
@@ -47,7 +47,7 @@ export async function fetchAdminProfile(
 ): Promise<AdminProfile | null> {
   // Primary record: admins/{uid}. This is the canonical form and supports
   // revocation without touching the Auth account.
-  const byUid = await getDoc(doc(db, ADMINS_COLLECTION, uid))
+  const byUid = await getDocFromServer(doc(db, ADMINS_COLLECTION, uid))
   if (byUid.exists()) {
     return toAdminProfile(uid, authEmail, byUid.data())
   }
@@ -58,7 +58,7 @@ export async function fetchAdminProfile(
   const email = authEmail?.trim().toLowerCase()
   if (!email) return null
 
-  const byEmail = await getDoc(doc(db, ADMINS_COLLECTION, email))
+  const byEmail = await getDocFromServer(doc(db, ADMINS_COLLECTION, email))
   if (byEmail.exists()) {
     return toAdminProfile(uid, authEmail, byEmail.data())
   }

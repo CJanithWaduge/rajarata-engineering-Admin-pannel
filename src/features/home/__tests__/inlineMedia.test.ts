@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('firebase/firestore', () => ({
   doc: vi.fn(() => ({ path: 'site/home' })),
-  getDoc: mocks.getDoc,
+  getDocFromServer: mocks.getDoc,
   setDoc: mocks.setDoc,
   serverTimestamp: vi.fn(() => 'server-ts'),
   Timestamp: class {

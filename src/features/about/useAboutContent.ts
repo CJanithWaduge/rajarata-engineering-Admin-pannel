@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { getAboutContent, saveAboutContent } from './aboutContentService'
 import { AboutError } from './errors'
 import type { AboutContent, AboutDraft, AboutStatus } from './types'
@@ -21,17 +21,23 @@ export function useAboutContent(): UseAboutContentResult {
   const [error, setError] = useState<string | null>(null)
   const [version, setVersion] = useState(0)
   const savingRef = useRef(false)
+  const loadRequestRef = useRef(0)
 
-  const reload = async () => {
-    setStatus('loading')
-    setError(null)
+  const load = useCallback(async (showLoading: boolean) => {
+    const requestId = ++loadRequestRef.current
+    if (showLoading) {
+      setStatus('loading')
+      setError(null)
+    }
     try {
       const result = await getAboutContent()
+      if (requestId !== loadRequestRef.current) return
       setContent(result.content)
       setExists(result.exists)
       setVersion((current) => current + 1)
       setStatus('ready')
     } catch (err) {
+      if (requestId !== loadRequestRef.current) return
       if (err instanceof AboutError) {
         setError(err.message)
       } else {
@@ -39,7 +45,9 @@ export function useAboutContent(): UseAboutContentResult {
       }
       setStatus('error')
     }
-  }
+  }, [])
+
+  const reload = useCallback(() => load(true), [load])
 
   const save = async (draft: AboutDraft, uid: string) => {
     // The button is disabled while saving, but a double-click can land before
@@ -49,6 +57,7 @@ export function useAboutContent(): UseAboutContentResult {
     }
 
     savingRef.current = true
+    loadRequestRef.current += 1
     setStatus('saving')
     setError(null)
 
@@ -70,8 +79,15 @@ export function useAboutContent(): UseAboutContentResult {
   }
 
   useEffect(() => {
-    void reload()
-  }, [])
+    let active = true
+    void Promise.resolve().then(() => {
+      if (active) return load(false)
+    })
+    return () => {
+      active = false
+      loadRequestRef.current += 1
+    }
+  }, [load])
 
   return { status, content, exists, error, version, reload, save }
 }

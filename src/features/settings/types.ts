@@ -6,6 +6,7 @@ export type SiteSettings = {
   facebookUrl: string
   facebookLabel: string
   location: string
+  mapEmbedUrl: string
   logoUrl: string
   logoAlt: string
   logoPath: string
@@ -25,6 +26,7 @@ export type SettingsFormValues = {
   facebookUrl: string
   facebookLabel: string
   location: string
+  mapEmbedUrl: string
   logoAlt: string
 }
 
