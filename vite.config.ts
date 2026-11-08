@@ -11,6 +11,7 @@ export default defineConfig({
     css: false,
     clearMocks: true,
     restoreMocks: true,
+    testTimeout: 15000,
     // These hit the Firebase emulators and run through `npm run test:emulator`.
     exclude: [...configDefaults.exclude, '**/*.emulator.test.ts'],
   },

@@ -24,9 +24,9 @@
 - Use the semantic utilities, not raw hex or default Tailwind colours: `bg-primary-container` / `text-on-primary`, `bg-background`, `text-on-surface`, `text-secondary`, `border-outline-variant`, `rounded-card` (18px) / `rounded-control` (12px) / `rounded-chip` (6px), `shadow-card` / `shadow-overlay`, and the type scale (`font-headline-sm text-headline-sm`, `font-body-md`, `font-label-caps`, …).
 - Brand red is `#af101a` with `#d32f2f` for primary fills; surfaces are the Material-3 greys (`#f9f9f9` background, `#ffffff` cards). Do not reintroduce slate/emerald/blue palettes.
 - Typography is **Plus Jakarta Sans**, loaded from Google Fonts in `index.html`. Do not swap the font without updating the public site too.
-- The brand mark in `src/components/brand/BrandLogo.tsx` mirrors the public site's `Logo.astro`; keep its geometry and colours in sync. Two deliberate differences, both documented in the component: the viewBox is `0 0 148 50` (the design's 240-wide box carried ~94 units of dead space, so a centred logo rendered ~37px left of centre) and the wordmark baselines sit 1.5 units higher for optical centring on the tile. `variant="dark"` inverts it for the login hero (red tile, white bolt) — the light variant is unchanged.
+- `src/components/brand/BrandLogo.tsx` displays the shared `public/admin-logo.jpeg` asset throughout the admin panel.
 - The login screen is a dark hero, not the light dashboard: `public/login-bg.webp` (optimised from the root `Log-In-page-bg.png`; only the WebP ships) behind scrims, with form controls on `tone="dark"` (`TextField`/`PasswordField`). The `auth-*` tokens in `src/index.css` exist only for that screen — do not use them in dashboard views.
-- `public/favicon.svg` is the brand mark (dark tile, red bolt, orange dot), not the Vite default.
+- `public/favicon.ico` is the admin panel favicon.
 - Do not edit the public-site repo as part of an admin-panel change; if a shared token must change, change both deliberately.
 
 ## Non-negotiable content rules

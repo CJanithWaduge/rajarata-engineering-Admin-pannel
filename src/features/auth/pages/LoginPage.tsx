@@ -1,4 +1,3 @@
-import { BrandLogo } from '../../../components/brand/BrandLogo'
 import { LoginForm } from '../components/LoginForm'
 
 export function LoginPage() {
@@ -26,7 +25,11 @@ export function LoginPage() {
       <div className="relative flex min-h-screen items-center justify-center px-5 py-10 sm:px-8 sm:py-14">
         <div className="w-full max-w-md">
           <div className="mb-7 text-center">
-            <BrandLogo variant="dark" className="mx-auto h-10 w-auto" />
+            <img
+              src="/admin-logo.jpeg"
+              alt="Rajarata Engineering"
+              className="mx-auto h-10 w-auto"
+            />
             <p className="mt-6 font-label-caps text-label-caps uppercase tracking-widest text-primary-fixed-dim">
               Admin portal
             </p>

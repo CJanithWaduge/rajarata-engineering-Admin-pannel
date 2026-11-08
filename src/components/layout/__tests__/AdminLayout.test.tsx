@@ -45,10 +45,10 @@ describe('AdminLayout', () => {
   it('renders the sidebar navigation and the active page', () => {
     renderLayout()
 
-    const logos = screen.getAllByRole('img', { name: 'Rajarata Engineering' })
+    const logos = screen.getAllByAltText('')
     expect(logos.length).toBeGreaterThan(0)
     logos.forEach((logo) => {
-      expect(logo).toHaveAttribute('viewBox', '0 0 240 50')
+      expect(logo).toHaveAttribute('src', 'admin-logo.jpeg')
     })
     expect(screen.getByRole('navigation', { name: 'Admin' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute(
