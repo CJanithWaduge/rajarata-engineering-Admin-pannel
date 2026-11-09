@@ -197,13 +197,13 @@ export function AboutContentForm({
 
       <Alert variant="info">
         Every field is optional. Leave anything blank to keep the value the
-        public page already shows for that slot. Contact details and the address
-        stay in Site Settings.
+        public page already shows for that slot. Contact numbers and the business
+        address stay in Site Settings.
       </Alert>
 
       <CollapsibleSection
         title="Hero"
-        description="Eyebrow, headline, intro, hero image, three snapshots, and the overlay card."
+        description="Eyebrow, headline, intro, hero image, snapshot and overlay labels."
         open={open.hero}
         onToggle={() => toggle('hero')}
         contentClassName="grid gap-6 px-6 py-5"
@@ -250,7 +250,7 @@ export function AboutContentForm({
 
       <CollapsibleSection
         title="Vision & Mission"
-        description="Two paired cards. The “Based In” location is read from Site Settings."
+        description="Two paired cards for the vision and mission statements."
         open={open.visionMission}
         onToggle={() => toggle('visionMission')}
         contentClassName="px-6 py-5"
@@ -306,7 +306,7 @@ export function AboutContentForm({
 
       <CollapsibleSection
         title="CTA"
-        description="The closing panel copy. Phone and WhatsApp actions stay in Site Settings."
+        description="The closing panel copy and action labels. Phone and WhatsApp numbers stay in Site Settings."
         open={open.cta}
         onToggle={() => toggle('cta')}
         contentClassName="px-6 py-5"

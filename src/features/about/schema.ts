@@ -42,6 +42,10 @@ const overlaySchema = z.object({
     ABOUT_TEXT_LIMITS.overlayDescription,
   ),
   stage: optionalText('Overlay stage', ABOUT_TEXT_LIMITS.overlayStage),
+  stageLabel: optionalText(
+    'Work stage label',
+    ABOUT_TEXT_LIMITS.overlayStageLabel,
+  ),
 })
 
 const heroTextSchema = z.object({
@@ -49,6 +53,14 @@ const heroTextSchema = z.object({
   title: optionalText('Hero title', ABOUT_TEXT_LIMITS.heroTitle),
   intro: optionalText('Hero intro', ABOUT_TEXT_LIMITS.heroIntro),
   alt: optionalText('Hero image alt text', ABOUT_TEXT_LIMITS.heroAlt),
+  approachLabel: optionalText(
+    'Approach button label',
+    ABOUT_TEXT_LIMITS.heroApproachLabel,
+  ),
+  snapshotLabel: optionalText(
+    'Snapshot label',
+    ABOUT_TEXT_LIMITS.snapshotLabel,
+  ),
   snapshots: z
     .array(snapshotSchema)
     .length(SNAPSHOT_COUNT, `Exactly ${SNAPSHOT_COUNT} snapshots are required.`),
@@ -70,6 +82,18 @@ const heritageSchema = z.object({
   title: optionalText('Story title', ABOUT_TEXT_LIMITS.heritageTitle),
   narrative: optionalText('Story narrative', ABOUT_TEXT_LIMITS.heritageNarrative),
   approach: optionalText('Approach paragraph', ABOUT_TEXT_LIMITS.heritageApproach),
+  basedInLabel: optionalText(
+    'Based in label',
+    ABOUT_TEXT_LIMITS.heritageBasedInLabel,
+  ),
+  basedInValue: optionalText(
+    'Based in value',
+    ABOUT_TEXT_LIMITS.heritageBasedInValue,
+  ),
+  approachLabel: optionalText(
+    'Approach heading label',
+    ABOUT_TEXT_LIMITS.heritageApproachLabel,
+  ),
   milestones: z
     .array(milestoneSchema)
     .length(MILESTONE_COUNT, `Exactly ${MILESTONE_COUNT} milestones are required.`),
@@ -123,6 +147,14 @@ const methodologySchema = z.object({
   ),
   title: optionalText('Methodology title', ABOUT_TEXT_LIMITS.methodologyTitle),
   intro: optionalText('Methodology intro', ABOUT_TEXT_LIMITS.methodologyIntro),
+  protocolLabel: optionalText(
+    'Protocol label',
+    ABOUT_TEXT_LIMITS.methodologyProtocolLabel,
+  ),
+  stagesLabel: optionalText(
+    'Stages label',
+    ABOUT_TEXT_LIMITS.methodologyStagesLabel,
+  ),
   steps: z
     .array(methodStepSchema)
     .length(
@@ -153,6 +185,15 @@ const ctaSchema = z.object({
   eyebrow: optionalText('CTA eyebrow', ABOUT_TEXT_LIMITS.ctaEyebrow),
   title: optionalText('CTA title', ABOUT_TEXT_LIMITS.ctaTitle),
   body: optionalText('CTA body', ABOUT_TEXT_LIMITS.ctaBody),
+  projectsLabel: optionalText(
+    'Projects button label',
+    ABOUT_TEXT_LIMITS.ctaProjectsLabel,
+  ),
+  phoneLabel: optionalText('Phone label', ABOUT_TEXT_LIMITS.ctaPhoneLabel),
+  whatsappLabel: optionalText(
+    'WhatsApp label',
+    ABOUT_TEXT_LIMITS.ctaWhatsappLabel,
+  ),
 })
 
 /** Text form schema. The hero image is validated and resolved separately. */
@@ -195,20 +236,80 @@ const storedImageSchema = z
  * Fixed array counts are still enforced. A document that fails this is
  * hand-edited or older than the current form, so the panel refuses it rather
  * than inventing any missing copy.
+ *
+ * The label fields added after the first release default to an empty string so
+ * an existing document (written before those labels were editable) still loads;
+ * the public page then keeps its build-time label for that slot.
  */
+const storedOverlaySchema = overlaySchema.extend({
+  stageLabel: optionalText(
+    'Work stage label',
+    ABOUT_TEXT_LIMITS.overlayStageLabel,
+  ).default(''),
+})
+
+const storedHeritageSchema = heritageSchema.extend({
+  basedInLabel: optionalText(
+    'Based in label',
+    ABOUT_TEXT_LIMITS.heritageBasedInLabel,
+  ).default(''),
+  basedInValue: optionalText(
+    'Based in value',
+    ABOUT_TEXT_LIMITS.heritageBasedInValue,
+  ).default(''),
+  approachLabel: optionalText(
+    'Approach heading label',
+    ABOUT_TEXT_LIMITS.heritageApproachLabel,
+  ).default(''),
+})
+
+const storedMethodologySchema = methodologySchema.extend({
+  protocolLabel: optionalText(
+    'Protocol label',
+    ABOUT_TEXT_LIMITS.methodologyProtocolLabel,
+  ).default(''),
+  stagesLabel: optionalText(
+    'Stages label',
+    ABOUT_TEXT_LIMITS.methodologyStagesLabel,
+  ).default(''),
+})
+
+const storedCtaSchema = ctaSchema.extend({
+  projectsLabel: optionalText(
+    'Projects button label',
+    ABOUT_TEXT_LIMITS.ctaProjectsLabel,
+  ).default(''),
+  phoneLabel: optionalText(
+    'Phone label',
+    ABOUT_TEXT_LIMITS.ctaPhoneLabel,
+  ).default(''),
+  whatsappLabel: optionalText(
+    'WhatsApp label',
+    ABOUT_TEXT_LIMITS.ctaWhatsappLabel,
+  ).default(''),
+})
+
 export const aboutContentSchema = z.object({
   hero: z.object({
     eyebrow: optionalText('Hero eyebrow', ABOUT_TEXT_LIMITS.heroEyebrow),
     title: optionalText('Hero title', ABOUT_TEXT_LIMITS.heroTitle),
     intro: optionalText('Hero intro', ABOUT_TEXT_LIMITS.heroIntro),
+    approachLabel: optionalText(
+      'Approach button label',
+      ABOUT_TEXT_LIMITS.heroApproachLabel,
+    ).default(''),
+    snapshotLabel: optionalText(
+      'Snapshot label',
+      ABOUT_TEXT_LIMITS.snapshotLabel,
+    ).default(''),
     image: storedImageSchema,
     snapshots: z.array(snapshotSchema).length(SNAPSHOT_COUNT),
-    overlay: overlaySchema,
+    overlay: storedOverlaySchema,
   }),
-  heritage: heritageSchema,
+  heritage: storedHeritageSchema,
   visionMission: visionMissionSchema,
   pillars: pillarsSchema,
-  methodology: methodologySchema,
+  methodology: storedMethodologySchema,
   industries: industriesSchema,
-  cta: ctaSchema,
+  cta: storedCtaSchema,
 })

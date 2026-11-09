@@ -28,6 +28,8 @@ export const SEED_ABOUT: AboutContent = {
       ...EMPTY_IMAGE,
       alt: 'Electrical engineer inspecting a control panel in an industrial facility',
     },
+    approachLabel: 'Our Approach & Methodology',
+    snapshotLabel: 'Scope',
     snapshots: [
       { title: 'MV/LV Distribution', description: 'Panels, cable tray and laying' },
       { title: 'Testing & Commissioning', description: 'Checks before handover' },
@@ -37,6 +39,7 @@ export const SEED_ABOUT: AboutContent = {
       title: 'Commissioning Panel Checks',
       description: 'Insulation, earthing, and functional testing before handover',
       stage: 'Test & Handover',
+      stageLabel: 'Work Stage',
     },
   },
   heritage: {
@@ -46,6 +49,9 @@ export const SEED_ABOUT: AboutContent = {
       'Rajarata Engineering is an electrical engineering and contracting company based in Anuradhapura. Each job follows the same route: review the site and its load requirements, design the distribution and protection scheme, install panels, cable tray and cabling, then test and commission before handover. MV/LV distribution, industrial installations, MDB/SMDB panel work, lightning protection systems, ELV and automation, and residential and commercial wiring make up the day-to-day scope of the practice.',
     approach:
       'Design, installation, and testing are treated as one continuous job, so responsibility stays clear from the first drawing to the final handover.',
+    basedInLabel: 'Based In',
+    basedInValue: 'Anuradhapura, Sri Lanka',
+    approachLabel: 'Our Approach',
     milestones: [
       {
         kicker: 'Distribution Networks',
@@ -139,6 +145,8 @@ export const SEED_ABOUT: AboutContent = {
     title: 'Our 5-Stage Project Methodology',
     intro:
       'Every project moves through the same five stages, from the first site survey to support after handover, so the client always knows what happens next.',
+    protocolLabel: 'Lifecycle Protocol',
+    stagesLabel: 'Project Stages',
     steps: [
       {
         icon: 'manage_search',
@@ -222,9 +230,12 @@ export const SEED_ABOUT: AboutContent = {
     ],
   },
   cta: {
-    eyebrow: 'Engineering Consultation',
+    eyebrow: 'engineering',
     title: 'Plan Your Next Electrical Installation',
     body: 'Reach the team directly by WhatsApp or phone to discuss MV/LV distribution, panel installation, cable work, testing and commissioning, or ELV and automation for your site.',
+    projectsLabel: 'View Past Projects',
+    phoneLabel: 'Phone',
+    whatsappLabel: 'WhatsApp',
   },
   updatedAt: null,
   updatedBy: null,

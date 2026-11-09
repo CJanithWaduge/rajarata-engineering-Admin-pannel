@@ -42,6 +42,8 @@ function toAboutDraft(content: AboutContent): AboutDraft {
       title: hero.title,
       intro: hero.intro,
       alt: hero.image.alt,
+      approachLabel: hero.approachLabel,
+      snapshotLabel: hero.snapshotLabel,
       snapshots: hero.snapshots,
       overlay: hero.overlay,
       // An empty selection keeps the public page's build-time hero artwork.

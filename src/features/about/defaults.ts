@@ -63,14 +63,24 @@ export function createEmptyAboutValues(): AboutFormValues {
       title: '',
       intro: '',
       alt: '',
+      approachLabel: '',
+      snapshotLabel: '',
       snapshots: Array.from({ length: SNAPSHOT_COUNT }, createEmptySnapshot),
-      overlay: { title: '', description: '', stage: '' },
+      overlay: {
+        title: '',
+        description: '',
+        stage: '',
+        stageLabel: '',
+      },
     },
     heritage: {
       eyebrow: '',
       title: '',
       narrative: '',
       approach: '',
+      basedInLabel: '',
+      basedInValue: '',
+      approachLabel: '',
       milestones: Array.from({ length: MILESTONE_COUNT }, createEmptyMilestone),
     },
     visionMission: {
@@ -87,6 +97,8 @@ export function createEmptyAboutValues(): AboutFormValues {
       eyebrow: '',
       title: '',
       intro: '',
+      protocolLabel: '',
+      stagesLabel: '',
       steps: Array.from({ length: METHOD_STEP_COUNT }, createEmptyMethodStep),
     },
     industries: {
@@ -95,7 +107,14 @@ export function createEmptyAboutValues(): AboutFormValues {
       intro: '',
       sectors: Array.from({ length: SECTOR_COUNT }, createEmptySector),
     },
-    cta: { eyebrow: '', title: '', body: '' },
+    cta: {
+      eyebrow: '',
+      title: '',
+      body: '',
+      projectsLabel: '',
+      phoneLabel: '',
+      whatsappLabel: '',
+    },
   }
 }
 
@@ -115,6 +134,8 @@ export function valuesFromContent(
       title: content.hero.title,
       intro: content.hero.intro,
       alt: content.hero.image.alt,
+      approachLabel: content.hero.approachLabel,
+      snapshotLabel: content.hero.snapshotLabel,
       snapshots: pad(content.hero.snapshots, SNAPSHOT_COUNT, createEmptySnapshot).map(
         (snapshot) => ({ ...snapshot }),
       ),
@@ -125,6 +146,9 @@ export function valuesFromContent(
       title: content.heritage.title,
       narrative: content.heritage.narrative,
       approach: content.heritage.approach,
+      basedInLabel: content.heritage.basedInLabel,
+      basedInValue: content.heritage.basedInValue,
+      approachLabel: content.heritage.approachLabel,
       milestones: pad(
         content.heritage.milestones,
         MILESTONE_COUNT,
@@ -147,6 +171,8 @@ export function valuesFromContent(
       eyebrow: content.methodology.eyebrow,
       title: content.methodology.title,
       intro: content.methodology.intro,
+      protocolLabel: content.methodology.protocolLabel,
+      stagesLabel: content.methodology.stagesLabel,
       steps: pad(
         content.methodology.steps,
         METHOD_STEP_COUNT,

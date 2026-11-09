@@ -27,6 +27,8 @@ export function validValues(): AboutFormValues {
     title: 'About the engineering practice',
     intro: 'A complete electrical engineering and contracting scope.',
     alt: 'Technician inspecting a distribution panel',
+    approachLabel: 'Our approach and methodology',
+    snapshotLabel: 'Scope',
     snapshots: Array.from({ length: SNAPSHOT_COUNT }, (_, index) => ({
       title: `Snapshot ${index + 1}`,
       description: `Snapshot description ${index + 1}`,
@@ -35,6 +37,7 @@ export function validValues(): AboutFormValues {
       title: 'Commissioning checks',
       description: 'Insulation, earthing, and functional testing.',
       stage: 'Test and handover',
+      stageLabel: 'Work stage',
     },
   }
 
@@ -43,6 +46,9 @@ export function validValues(): AboutFormValues {
     title: 'Engineering heritage',
     narrative: 'Every job follows the same route from survey to handover.',
     approach: 'Design, installation, and testing are one continuous job.',
+    basedInLabel: 'Based in',
+    basedInValue: 'Anuradhapura, Sri Lanka',
+    approachLabel: 'Our approach',
     milestones: Array.from({ length: MILESTONE_COUNT }, (_, index) => ({
       kicker: `Milestone kicker ${index + 1}`,
       badge: `Badge ${index + 1}`,
@@ -82,6 +88,8 @@ export function validValues(): AboutFormValues {
     eyebrow: 'Execution architecture',
     title: 'Project methodology',
     intro: 'Every project moves through the same stages.',
+    protocolLabel: 'Lifecycle protocol',
+    stagesLabel: 'Project stages',
     steps: Array.from({ length: METHOD_STEP_COUNT }, (_, index) => ({
       icon: icon(index),
       title: `Stage ${index + 1}`,
@@ -105,6 +113,9 @@ export function validValues(): AboutFormValues {
     eyebrow: 'Engineering consultation',
     title: 'Plan the next installation',
     body: 'Reach the team to discuss the electrical scope.',
+    projectsLabel: 'View past projects',
+    phoneLabel: 'Phone',
+    whatsappLabel: 'WhatsApp',
   }
 
   return values
@@ -131,6 +142,8 @@ export function validContent(): AboutContent {
       eyebrow: values.hero.eyebrow,
       title: values.hero.title,
       intro: values.hero.intro,
+      approachLabel: values.hero.approachLabel,
+      snapshotLabel: values.hero.snapshotLabel,
       snapshots: values.hero.snapshots,
       overlay: values.hero.overlay,
       image: validImage(),

@@ -45,17 +45,41 @@ export function AboutCtaEditor({ register, errors, disabled }: Props) {
             {...register('cta.body')}
           />
         </div>
+        <TextField
+          id="about-cta-projects-label"
+          label="Projects button label"
+          hint={aboutTextHint(ABOUT_TEXT_LIMITS.ctaProjectsLabel)}
+          disabled={disabled}
+          error={ctaErrors?.projectsLabel?.message}
+          {...register('cta.projectsLabel')}
+        />
+        <TextField
+          id="about-cta-phone-label"
+          label="Phone label"
+          hint={aboutTextHint(ABOUT_TEXT_LIMITS.ctaPhoneLabel)}
+          disabled={disabled}
+          error={ctaErrors?.phoneLabel?.message}
+          {...register('cta.phoneLabel')}
+        />
+        <TextField
+          id="about-cta-whatsapp-label"
+          label="WhatsApp label"
+          hint={aboutTextHint(ABOUT_TEXT_LIMITS.ctaWhatsappLabel)}
+          disabled={disabled}
+          error={ctaErrors?.whatsappLabel?.message}
+          {...register('cta.whatsappLabel')}
+        />
       </div>
 
       <p className="font-body-sm text-body-sm text-secondary">
-        The phone and WhatsApp buttons below this panel read from{' '}
+        The phone and WhatsApp numbers themselves read from{' '}
         <Link
           to={ROUTES.settings}
           className="font-semibold text-primary underline-offset-4 hover:underline"
         >
           Site Settings
         </Link>
-        . They are not edited here.
+        . Only their labels are edited here.
       </p>
     </div>
   )

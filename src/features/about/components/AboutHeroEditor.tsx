@@ -57,6 +57,22 @@ export function AboutHeroEditor({ register, errors, disabled }: Props) {
             {...register('hero.alt')}
           />
         </div>
+        <TextField
+          id="about-hero-approach-label"
+          label="Approach button label"
+          hint={aboutTextHint(ABOUT_TEXT_LIMITS.heroApproachLabel)}
+          disabled={disabled}
+          error={heroErrors?.approachLabel?.message}
+          {...register('hero.approachLabel')}
+        />
+        <TextField
+          id="about-hero-snapshot-label"
+          label="Snapshot label"
+          hint={aboutTextHint(ABOUT_TEXT_LIMITS.snapshotLabel)}
+          disabled={disabled}
+          error={heroErrors?.snapshotLabel?.message}
+          {...register('hero.snapshotLabel')}
+        />
       </div>
 
       <fieldset className="space-y-3">
@@ -123,6 +139,14 @@ export function AboutHeroEditor({ register, errors, disabled }: Props) {
             disabled={disabled}
             error={heroErrors?.overlay?.stage?.message}
             {...register('hero.overlay.stage')}
+          />
+          <TextField
+            id="about-hero-overlay-stage-label"
+            label="Work stage label"
+            hint={aboutTextHint(ABOUT_TEXT_LIMITS.overlayStageLabel)}
+            disabled={disabled}
+            error={heroErrors?.overlay?.stageLabel?.message}
+            {...register('hero.overlay.stageLabel')}
           />
           <div className="sm:col-span-2">
             <TextArea

@@ -178,6 +178,43 @@ describe('aboutContentSchema', () => {
     expect(aboutContentSchema.safeParse(document).success).toBe(true)
   })
 
+  it('accepts a stored document missing the later label fields', () => {
+    const document = storedDocument() as Record<string, unknown>
+    const hero = document.hero as Record<string, unknown>
+    const heritage = document.heritage as Record<string, unknown>
+    const methodology = document.methodology as Record<string, unknown>
+    const cta = document.cta as Record<string, unknown>
+    const overlay = hero.overlay as Record<string, unknown>
+
+    delete hero.approachLabel
+    delete hero.snapshotLabel
+    delete overlay.stageLabel
+    delete heritage.basedInLabel
+    delete heritage.basedInValue
+    delete heritage.approachLabel
+    delete methodology.protocolLabel
+    delete methodology.stagesLabel
+    delete cta.projectsLabel
+    delete cta.phoneLabel
+    delete cta.whatsappLabel
+
+    const result = aboutContentSchema.safeParse(document)
+
+    expect(result.success).toBe(true)
+    if (!result.success) return
+    expect(result.data.hero.approachLabel).toBe('')
+    expect(result.data.hero.snapshotLabel).toBe('')
+    expect(result.data.hero.overlay.stageLabel).toBe('')
+    expect(result.data.heritage.basedInLabel).toBe('')
+    expect(result.data.heritage.basedInValue).toBe('')
+    expect(result.data.heritage.approachLabel).toBe('')
+    expect(result.data.methodology.protocolLabel).toBe('')
+    expect(result.data.methodology.stagesLabel).toBe('')
+    expect(result.data.cta.projectsLabel).toBe('')
+    expect(result.data.cta.phoneLabel).toBe('')
+    expect(result.data.cta.whatsappLabel).toBe('')
+  })
+
   it('rejects a stored image without alt text', () => {
     const document = storedDocument()
     document.hero.image.imageAlt = ''

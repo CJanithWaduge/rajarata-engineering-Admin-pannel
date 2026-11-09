@@ -42,7 +42,7 @@ export function HeritageEditor({ register, errors, disabled }: Props) {
             id="about-heritage-narrative"
             label="Story narrative"
             rows={6}
-            hint={`${aboutTextHint(ABOUT_TEXT_LIMITS.heritageNarrative)} Based In stays in Site Settings.`}
+            hint={aboutTextHint(ABOUT_TEXT_LIMITS.heritageNarrative)}
             disabled={disabled}
             error={heritageErrors?.narrative?.message}
             {...register('heritage.narrative')}
@@ -59,6 +59,30 @@ export function HeritageEditor({ register, errors, disabled }: Props) {
             {...register('heritage.approach')}
           />
         </div>
+        <TextField
+          id="about-heritage-based-in-label"
+          label="Based in label"
+          hint={aboutTextHint(ABOUT_TEXT_LIMITS.heritageBasedInLabel)}
+          disabled={disabled}
+          error={heritageErrors?.basedInLabel?.message}
+          {...register('heritage.basedInLabel')}
+        />
+        <TextField
+          id="about-heritage-based-in-value"
+          label="Based in value"
+          hint={aboutTextHint(ABOUT_TEXT_LIMITS.heritageBasedInValue)}
+          disabled={disabled}
+          error={heritageErrors?.basedInValue?.message}
+          {...register('heritage.basedInValue')}
+        />
+        <TextField
+          id="about-heritage-approach-label"
+          label="Approach heading label"
+          hint={aboutTextHint(ABOUT_TEXT_LIMITS.heritageApproachLabel)}
+          disabled={disabled}
+          error={heritageErrors?.approachLabel?.message}
+          {...register('heritage.approachLabel')}
+        />
       </div>
 
       <fieldset className="space-y-3">

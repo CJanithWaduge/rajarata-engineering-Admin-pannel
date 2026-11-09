@@ -22,6 +22,7 @@ export type AboutOverlay = {
   title: string
   description: string
   stage: string
+  stageLabel: string
 }
 
 export type AboutMilestone = {
@@ -65,6 +66,8 @@ export type AboutFormValues = {
     title: string
     intro: string
     alt: string
+    approachLabel: string
+    snapshotLabel: string
     snapshots: AboutSnapshot[]
     overlay: AboutOverlay
   }
@@ -73,6 +76,9 @@ export type AboutFormValues = {
     title: string
     narrative: string
     approach: string
+    basedInLabel: string
+    basedInValue: string
+    approachLabel: string
     milestones: AboutMilestone[]
   }
   visionMission: {
@@ -89,6 +95,8 @@ export type AboutFormValues = {
     eyebrow: string
     title: string
     intro: string
+    protocolLabel: string
+    stagesLabel: string
     steps: AboutMethodStep[]
   }
   industries: {
@@ -101,6 +109,9 @@ export type AboutFormValues = {
     eyebrow: string
     title: string
     body: string
+    projectsLabel: string
+    phoneLabel: string
+    whatsappLabel: string
   }
 }
 

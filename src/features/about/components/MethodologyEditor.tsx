@@ -50,6 +50,22 @@ export function MethodologyEditor({ register, errors, disabled }: Props) {
             {...register('methodology.intro')}
           />
         </div>
+        <TextField
+          id="about-methodology-protocol-label"
+          label="Protocol label"
+          hint={aboutTextHint(ABOUT_TEXT_LIMITS.methodologyProtocolLabel)}
+          disabled={disabled}
+          error={methodologyErrors?.protocolLabel?.message}
+          {...register('methodology.protocolLabel')}
+        />
+        <TextField
+          id="about-methodology-stages-label"
+          label="Stages label"
+          hint={aboutTextHint(ABOUT_TEXT_LIMITS.methodologyStagesLabel)}
+          disabled={disabled}
+          error={methodologyErrors?.stagesLabel?.message}
+          {...register('methodology.stagesLabel')}
+        />
       </div>
 
       <fieldset className="space-y-3">

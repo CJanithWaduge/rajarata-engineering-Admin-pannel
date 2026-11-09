@@ -38,12 +38,24 @@ describe('AboutContentForm', { timeout: 20_000 }, () => {
     renderForm(validContent())
 
     expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled()
-    expect(screen.queryByLabelText(/phone/i)).not.toBeInTheDocument()
-    expect(screen.queryByLabelText(/whatsapp/i)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/phone number/i)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/whatsapp number/i)).not.toBeInTheDocument()
     expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument()
     expect(screen.queryByLabelText(/address/i)).not.toBeInTheDocument()
     expect(screen.queryByLabelText(/facebook/i)).not.toBeInTheDocument()
     expect(screen.getByLabelText('Hero image')).toBeInTheDocument()
+  })
+
+  it('previews the hero in a fixed 16:9 frame and requires a 1920 × 1080 image', () => {
+    renderForm(validContent())
+
+    const heroImage = document.querySelector(
+      'img[src*="about%2Fhero%2Fstored.webp"]',
+    )
+    expect(heroImage?.parentElement).toHaveClass('aspect-[16/9]')
+    expect(
+      screen.getByText(/Exactly 1920 × 1080 px \(16:9\)/),
+    ).toBeInTheDocument()
   })
 
   it('opens Core Pillars with five fixed editors', async () => {
@@ -58,7 +70,7 @@ describe('AboutContentForm', { timeout: 20_000 }, () => {
     expect(within(pillars).getAllByLabelText('Icon')).toHaveLength(5)
   })
 
-  it('links contact changes to Site Settings instead of rendering inputs', async () => {
+  it('links contact numbers to Site Settings instead of rendering inputs', async () => {
     const user = userEvent.setup()
     renderForm(validContent())
 
@@ -68,7 +80,7 @@ describe('AboutContentForm', { timeout: 20_000 }, () => {
       'href',
       '/settings',
     )
-    expect(screen.getByText(/They are not edited here/)).toBeInTheDocument()
+    expect(screen.getByText(/Only their labels are edited here/)).toBeInTheDocument()
   })
 
   it('rejects an over-limit value and focuses an error', async () => {
