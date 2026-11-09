@@ -1,9 +1,10 @@
+import { isIconifyIconName } from '../../lib/iconify'
 import type { ImageContentType } from './types'
 
 export const CARD_COUNT = 3
 
 /** Fixed number of cards in the Home page's "Our Electrical Services" grid. */
-export const HOME_SERVICE_COUNT = 6
+export const HOME_SERVICE_COUNT = 3
 
 /**
  * Material Symbols names the public Home grid can render. This is the union of
@@ -17,6 +18,8 @@ export const HOME_SERVICE_ICONS = [
   'build_circle',
   'lan',
   'bolt',
+  'security',
+  'electric_meter',
   'apartment',
   'developer_board',
   'linear_scale',
@@ -59,6 +62,14 @@ export const HOME_SERVICE_LINK_OPTIONS = HOME_SERVICE_HREFS.map((value) => ({
 
 export function isHomeServiceIcon(value: string): value is HomeServiceIcon {
   return (HOME_SERVICE_ICONS as readonly string[]).includes(value)
+}
+
+/**
+ * A stored icon is either a curated name from the self-hosted subset or an
+ * Iconify name picked from the internet search.
+ */
+export function isHomeServiceIconValue(value: string): boolean {
+  return isHomeServiceIcon(value) || isIconifyIconName(value)
 }
 
 export function isHomeServiceHref(value: string): value is HomeServiceHref {

@@ -4,24 +4,43 @@ import {
   extractGoogleMapEmbedUrl,
   isGoogleMapEmbedUrl,
 } from './mapEmbed'
+import { normaliseSriLankaPhone, normaliseSriLankaWhatsApp } from './phoneNumber'
 import type { SettingsFormValues } from './types'
+
+export const PHONE_NUMBER_MESSAGE =
+  'Enter a Sri Lankan phone number as 0771234567 (10 digits) or +94771234567, or leave it empty.'
+
+export const WHATSAPP_NUMBER_MESSAGE =
+  'Enter a Sri Lankan WhatsApp number as 0771234567 (10 digits) or +94771234567, or leave it empty.'
 
 const phoneSchema = z
   .string()
-  .transform((value) => value.trim())
-  .refine(
-    (value) => value === '' || /^\+?[0-9][0-9\s().-]{6,19}$/.test(value.replace(/\s+/g, '')),
-    { message: 'Enter a phone number in international format, or leave it empty.' },
-  )
-  .refine((value) => value === '' || /^\+[1-9]\d{7,14}$/.test(value.replace(/[\s().-]/g, '')), {
-    message: 'Enter a phone number in international format, or leave it empty.',
+  .transform((value, ctx) => {
+    const trimmed = value.trim()
+    if (trimmed === '') return ''
+
+    const normalised = normaliseSriLankaPhone(trimmed)
+    if (normalised === null) {
+      ctx.addIssue({ code: 'custom', message: PHONE_NUMBER_MESSAGE })
+      return z.NEVER
+    }
+
+    return normalised
   })
 
 const whatsappSchema = z
   .string()
-  .transform((value) => value.trim())
-  .refine((value) => value === '' || /^[1-9]\d{7,14}$/.test(value.replace(/[^\d]/g, '')), {
-    message: 'Enter a WhatsApp number as digits with country code (8–15 digits), or leave it empty.',
+  .transform((value, ctx) => {
+    const trimmed = value.trim()
+    if (trimmed === '') return ''
+
+    const normalised = normaliseSriLankaWhatsApp(trimmed)
+    if (normalised === null) {
+      ctx.addIssue({ code: 'custom', message: WHATSAPP_NUMBER_MESSAGE })
+      return z.NEVER
+    }
+
+    return normalised
   })
 
 const emailSchema = z
@@ -93,14 +112,11 @@ export const settingsSchema = z.object({
 
 export function normaliseSettings(input: SettingsFormValues): SettingsFormValues {
   const phone = input.phone.trim()
-  const whatsappDigits = input.whatsapp.trim().replace(/[^\d]/g, '')
-  const phoneClean = phone.replace(/[\s().-]/g, '')
-  const phoneNormalised =
-    phone === '' ? '' : phoneClean.startsWith('+') ? phoneClean : phoneClean
+  const whatsapp = input.whatsapp.trim()
 
   return {
-    phone: phone === '' ? '' : phoneNormalised.startsWith('+') ? phoneNormalised : phone.startsWith('+') ? phoneClean : phone,
-    whatsapp: whatsappDigits === '' ? '' : whatsappDigits,
+    phone: phone === '' ? '' : (normaliseSriLankaPhone(phone) ?? phone),
+    whatsapp: whatsapp === '' ? '' : (normaliseSriLankaWhatsApp(whatsapp) ?? whatsapp),
     email: input.email.trim(),
     address: input.address.replace(/\r\n/g, '\n'),
     facebookUrl: input.facebookUrl.trim(),

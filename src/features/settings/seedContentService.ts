@@ -21,7 +21,7 @@ export type SeedSummary = {
 
 /**
  * Seeding only covers the pages whose copy is stored as plain text: Services,
- * About, Projects, the featured Home project cards, and the six Home service
+ * About, Projects, the featured Home project cards, and the three Home service
  * cards. Home images are retained when present; no media is invented.
  * Settings contact details come from the public site's build-time environment,
  * so they are not written here.

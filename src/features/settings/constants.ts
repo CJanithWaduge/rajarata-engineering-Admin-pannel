@@ -25,16 +25,19 @@ export const SETTINGS_FIELDS: SettingsFieldMeta[] = [
   {
     key: 'phone',
     label: 'Phone number',
-    hint: 'International format, including the country code.',
+    hint: 'Sri Lankan number: 0771234567 (10 digits) or +94771234567. Leave empty to hide it.',
     type: 'text',
+    placeholder: '0771234567',
     autocomplete: 'tel',
     group: 'contact',
   },
   {
     key: 'whatsapp',
     label: 'WhatsApp number',
-    hint: 'Digits only, including the country code.',
+    hint: 'Sri Lankan number: 0771234567 or +94771234567. Saved as 94771234567 for wa.me links.',
     type: 'text',
+    placeholder: '0771234567',
+    autocomplete: 'tel',
     group: 'contact',
   },
   {

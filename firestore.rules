@@ -47,7 +47,7 @@ service cloud.firestore {
     }
 
     // Home page singleton: hero media, three featured project cards, and the
-    // six "Our Electrical Services" cards. The public site hydrates the Home
+    // three "Our Electrical Services" cards. The public site hydrates the Home
     // page from this document, so read is public by design. Shape checks are a
     // backstop; the admin form validates every value and every image before it
     // writes.
@@ -56,7 +56,7 @@ service cloud.firestore {
         && request.resource.data.featuredProjects is list
         && request.resource.data.featuredProjects.size() == 3
         && request.resource.data.featuredServices is list
-        && request.resource.data.featuredServices.size() == 6
+        && request.resource.data.featuredServices.size() == 3
         && request.resource.data.updatedAt is timestamp
         && request.resource.data.updatedBy is string;
     }

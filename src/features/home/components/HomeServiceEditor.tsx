@@ -1,4 +1,5 @@
 import { CollapsibleSection } from '../../../components/ui/CollapsibleSection'
+import { IconPicker } from '../../../components/ui/IconPicker'
 import { SelectField } from '../../../components/ui/SelectField'
 import { TextArea } from '../../../components/ui/TextArea'
 import { TextField } from '../../../components/ui/TextField'
@@ -19,11 +20,6 @@ type Props = {
   onToggle: () => void
   onChange: (field: HomeServiceTextField, value: string) => void
 }
-
-const ICON_OPTIONS = [
-  { value: '', label: 'Keep current icon' },
-  ...HOME_SERVICE_ICON_OPTIONS,
-]
 
 const LINK_OPTIONS = [
   { value: '', label: 'Keep current link' },
@@ -53,27 +49,32 @@ export function HomeServiceEditor({
       headingLevel={3}
       contentClassName="grid gap-5 px-6 py-5 sm:grid-cols-2"
     >
-      <SelectField
-        id={fieldId('icon')}
-        label="Icon"
-        value={service.icon}
-        options={ICON_OPTIONS}
-        onChange={(event) => onChange('icon', event.target.value)}
-        hint="Material Symbols icon shown in the tile."
-        error={errorFor('icon')}
-        disabled={disabled}
-      />
+      <div className="sm:col-span-2">
+        <IconPicker
+          id={fieldId('icon')}
+          label="Icon"
+          value={service.icon}
+          options={HOME_SERVICE_ICON_OPTIONS}
+          emptyLabel="Keep current icon"
+          onChange={(value) => onChange('icon', value)}
+          hint="Search any icon by name. Curated icons use the public site's built-in font; other results load from Iconify."
+          error={errorFor('icon')}
+          disabled={disabled}
+        />
+      </div>
 
-      <SelectField
-        id={fieldId('href')}
-        label="Learn More link"
-        value={service.href}
-        options={LINK_OPTIONS}
-        onChange={(event) => onChange('href', event.target.value)}
-        hint="Service anchor on the Services page."
-        error={errorFor('href')}
-        disabled={disabled}
-      />
+      <div className="sm:col-span-2">
+        <SelectField
+          id={fieldId('href')}
+          label="Learn More link"
+          value={service.href}
+          options={LINK_OPTIONS}
+          onChange={(event) => onChange('href', event.target.value)}
+          hint="Service anchor on the Services page."
+          error={errorFor('href')}
+          disabled={disabled}
+        />
+      </div>
 
       <div className="sm:col-span-2">
         <TextField

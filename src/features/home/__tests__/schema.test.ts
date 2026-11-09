@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cardTextSchema, heroTextSchema, homeTextSchema } from '../schema'
+import { cardTextSchema, heroTextSchema, homeServiceSchema, homeTextSchema } from '../schema'
 
 const CARD = {
   alt: 'A technician testing a distribution panel',
@@ -19,7 +19,7 @@ const SERVICE = {
 const HOME = {
   heroAlt: 'A technician at an electrical distribution panel',
   cards: [CARD, CARD, CARD],
-  services: [SERVICE, SERVICE, SERVICE, SERVICE, SERVICE, SERVICE],
+  services: [SERVICE, SERVICE, SERVICE],
 }
 
 describe('cardTextSchema', () => {
@@ -56,10 +56,46 @@ describe('cardTextSchema', () => {
   })
 })
 
+describe('homeServiceSchema', () => {
+  it('accepts a curated icon or an internet-selected icon', () => {
+    expect(homeServiceSchema.safeParse(SERVICE).success).toBe(true)
+    expect(
+      homeServiceSchema.safeParse({ ...SERVICE, icon: 'material-symbols:camera' })
+        .success,
+    ).toBe(true)
+    expect(
+      homeServiceSchema.safeParse({ ...SERVICE, icon: 'material-symbols:camera-outline' })
+        .success,
+    ).toBe(true)
+  })
+
+  it('rejects icon names that are not safe to interpolate into a URL', () => {
+    for (const icon of [
+      'material-symbols:',
+      'material-symbols:Camera',
+      'material-symbols:camera.svg',
+      'material-symbols:camera?color=red',
+      'camera',
+    ]) {
+      expect(homeServiceSchema.safeParse({ ...SERVICE, icon }).success).toBe(false)
+    }
+  })
+})
+
 describe('homeTextSchema', () => {
   it('requires three cards', () => {
     expect(homeTextSchema.safeParse({ ...HOME, cards: [CARD, CARD] }).success).toBe(false)
     expect(homeTextSchema.safeParse(HOME).success).toBe(true)
+  })
+
+  it('requires exactly three service slots', () => {
+    expect(
+      homeTextSchema.safeParse({ ...HOME, services: [SERVICE, SERVICE] }).success,
+    ).toBe(false)
+    expect(
+      homeTextSchema.safeParse({ ...HOME, services: [SERVICE, SERVICE, SERVICE, SERVICE] })
+        .success,
+    ).toBe(false)
   })
 
   it('requires hero alt text', () => {

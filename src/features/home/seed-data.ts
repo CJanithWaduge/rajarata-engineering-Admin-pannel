@@ -11,45 +11,24 @@ import type { CardDraft, HomeContent, HomeDraft } from './types'
 export const SEED_HOME_SERVICES: HomeContent['featuredServices'] = [
   {
     icon: 'home_repair_service',
-    title: 'Residential & Commercial Wiring',
+    title: 'Residential, Commercial & Industrial Electrical Installations',
     description:
-      'Complete wiring for homes, offices, and retail spaces — conduit routing, socket and lighting circuits, and balanced load distribution.',
+      'Complete electrical wiring, power distribution, and installation for homes, offices, commercial buildings, and industrial facilities with high safety standards.',
     href: '/services#service-01',
   },
   {
-    icon: 'precision_manufacturing',
-    title: 'Industrial Electrical Installations',
+    icon: 'security',
+    title: 'CCTV Camera Installation & Maintenance',
     description:
-      'High-demand manufacturing floor power drops, transformer stations, motor controls, and heavy feeder wiring.',
-    href: '/services#service-02',
-  },
-  {
-    icon: 'assignment_turned_in',
-    title: 'Testing & Commissioning',
-    description:
-      'Insulation resistance, loop impedance, earth electrode validation, thermal surveys, and formal handover certs.',
-    href: '/services#service-05',
-  },
-  {
-    icon: 'build_circle',
-    title: 'Maintenance & Troubleshooting',
-    description:
-      'Fault finding, inspection, repair, and preventive upkeep of installed LV systems and equipment to keep them running safely.',
-    href: '/services#service-06',
-  },
-  {
-    icon: 'lan',
-    title: 'All Kinds of ELV Solutions',
-    description:
-      'Structured cabling, access control, CCTV networks, addressable fire alarms, and Building Management Systems (BMS).',
+      'Professional security camera setup, advanced surveillance configuration, and regular maintenance to ensure maximum protection for your premises.',
     href: '/services#service-07',
   },
   {
-    icon: 'bolt',
-    title: 'Lightning Protection System (LPS)',
+    icon: 'electric_meter',
+    title: 'MDB / SMDB Panel Installation',
     description:
-      'ESE and conventional air terminal networks, down-conductor dissipation paths, and transient surge suppression (SPD).',
-    href: '/services#service-08',
+      'Expert installation, wiring, and configuration of Main Distribution Boards (MDB) and Sub Main Distribution Boards (SMDB) for reliable and efficient power control.',
+    href: '/services#service-03',
   },
 ]
 

@@ -63,6 +63,22 @@ describe('seedHomeDraft', () => {
     expect(draft.cards[0]?.alt).toBe('Existing project-1 photograph')
   })
 
+  it('seeds the three public service cards', () => {
+    const draft = seedHomeDraft()
+
+    expect(draft.services).toHaveLength(3)
+    expect(draft.services.map((service) => service.icon)).toEqual([
+      'home_repair_service',
+      'security',
+      'electric_meter',
+    ])
+    expect(draft.services.map((service) => service.href)).toEqual([
+      '/services#service-01',
+      '/services#service-07',
+      '/services#service-03',
+    ])
+  })
+
   it('seeds project copy without inventing image selections when none exist', () => {
     const draft = seedHomeDraft()
 

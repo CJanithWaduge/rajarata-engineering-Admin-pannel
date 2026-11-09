@@ -98,30 +98,32 @@ export function validateHomeDraft(draft: HomeDraft): HomeDraftValidation {
     }
   })
 
-  const services: HomeService[] = (draft.services || []).map((service, index) => {
-    const parsed = homeServiceSchema.safeParse({
-      icon: service.icon,
-      title: service.title,
-      description: service.description,
-      href: service.href,
-    })
+  const services: HomeService[] = (draft.services || [])
+    .slice(0, HOME_SERVICE_COUNT)
+    .map((service, index) => {
+      const parsed = homeServiceSchema.safeParse({
+        icon: service.icon,
+        title: service.title,
+        description: service.description,
+        href: service.href,
+      })
 
-    if (parsed.success) return parsed.data
+      if (parsed.success) return parsed.data
 
-    for (const issue of parsed.error.issues) {
-      const field = issue.path[0]
-      if (typeof field === 'string') {
-        textErrors[`services.${index}.${field}`] = issue.message
+      for (const issue of parsed.error.issues) {
+        const field = issue.path[0]
+        if (typeof field === 'string') {
+          textErrors[`services.${index}.${field}`] = issue.message
+        }
       }
-    }
 
-    return {
-      icon: service.icon.trim(),
-      title: service.title.trim(),
-      description: service.description.trim(),
-      href: service.href.trim(),
-    }
-  })
+      return {
+        icon: service.icon.trim(),
+        title: service.title.trim(),
+        description: service.description.trim(),
+        href: service.href.trim(),
+      }
+    })
 
   while (services.length < HOME_SERVICE_COUNT) {
     services.push(createEmptyService())

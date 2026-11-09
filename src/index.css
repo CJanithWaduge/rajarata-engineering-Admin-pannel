@@ -198,6 +198,27 @@
 }
 
 @layer base {
+  /*
+   * Material Symbols glyphs used by the admin icon picker previews. The font is
+   * loaded from Google Fonts in index.html; this mirrors the public site's
+   * ligature settings so an icon name renders as a single glyph.
+   */
+  .material-symbols-outlined {
+    font-family: "Material Symbols Outlined";
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+  }
+
   html {
     -webkit-text-size-adjust: 100%;
   }

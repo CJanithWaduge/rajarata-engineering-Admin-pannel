@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
@@ -61,39 +61,24 @@ function content(): HomeContent {
     featuredServices: [
       {
         icon: 'home_repair_service',
-        title: 'Residential & Commercial Wiring',
-        description: 'Complete wiring for homes and offices.',
+        title: 'Residential, Commercial & Industrial Electrical Installations',
+        description:
+          'Complete electrical wiring, power distribution, and installation for homes, offices, commercial buildings, and industrial facilities with high safety standards.',
         href: '/services#service-01',
       },
       {
-        icon: 'precision_manufacturing',
-        title: 'Industrial Electrical Installations',
-        description: 'High-demand manufacturing floor power drops.',
-        href: '/services#service-02',
-      },
-      {
-        icon: 'assignment_turned_in',
-        title: 'Testing & Commissioning',
-        description: 'Insulation resistance and loop impedance checks.',
-        href: '/services#service-05',
-      },
-      {
-        icon: 'build_circle',
-        title: 'Maintenance & Troubleshooting',
-        description: 'Fault finding and preventive upkeep of LV systems.',
-        href: '/services#service-06',
-      },
-      {
-        icon: 'lan',
-        title: 'All Kinds of ELV Solutions',
-        description: 'Structured cabling, access control, and CCTV networks.',
+        icon: 'security',
+        title: 'CCTV Camera Installation & Maintenance',
+        description:
+          'Professional security camera setup, advanced surveillance configuration, and regular maintenance to ensure maximum protection for your premises.',
         href: '/services#service-07',
       },
       {
-        icon: 'bolt',
-        title: 'Lightning Protection System (LPS)',
-        description: 'ESE and conventional air terminal networks.',
-        href: '/services#service-08',
+        icon: 'electric_meter',
+        title: 'MDB / SMDB Panel Installation',
+        description:
+          'Expert installation, wiring, and configuration of Main Distribution Boards (MDB) and Sub Main Distribution Boards (SMDB) for reliable and efficient power control.',
+        href: '/services#service-03',
       },
     ],
     updatedAt: null,
@@ -116,6 +101,18 @@ describe('HomeContentForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.onSubmit.mockResolvedValue(undefined)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({ icons: [] }),
+      })),
+    )
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   it('renders the stored hero and all three cards', () => {
@@ -130,6 +127,39 @@ describe('HomeContentForm', () => {
     expect(screen.getByRole('button', { name: 'Expand Card 1' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Expand Card 2' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Expand Card 3' })).toBeInTheDocument()
+  })
+
+  it('renders exactly three featured service slots', () => {
+    renderForm()
+
+    expect(
+      screen.getByRole('button', { name: 'Expand Service Card 1' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Expand Service Card 2' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Expand Service Card 3' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Expand Service Card 4' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('searches the supported icons and saves the selected service icon', async () => {
+    const user = userEvent.setup()
+    renderForm()
+
+    await user.click(screen.getByRole('button', { name: 'Expand Service Card 1' }))
+
+    const searches = screen.getAllByLabelText('Search icons')
+    await user.type(searches[0]!, 'security')
+    await user.click(screen.getByRole('radio', { name: 'Security' }))
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    expect(mocks.onSubmit).toHaveBeenCalledTimes(1)
+    const draft = mocks.onSubmit.mock.calls[0]?.[0] as HomeDraft
+    expect(draft.services[0]?.icon).toBe('security')
   })
 
   it('collapses and expands the hero and a project card', async () => {

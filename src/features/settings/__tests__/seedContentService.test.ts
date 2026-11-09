@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { aboutFormSchema } from '../../about/schema'
+import { HOME_SERVICE_COUNT } from '../../home/constants'
 import { homeServiceSchema } from '../../home/schema'
 import { projectsFormSchema } from '../../projects/schema'
 import { servicesFormSchema } from '../../services/schema'
@@ -62,7 +63,7 @@ describe('seedAllContent', () => {
 
     const home = mocks.saveHomeContent.mock.calls[0]![0]
     expect(
-      z.array(homeServiceSchema).length(6).safeParse(home.services).success,
+      z.array(homeServiceSchema).length(HOME_SERVICE_COUNT).safeParse(home.services).success,
     ).toBe(true)
     expect(home.hero.image.kind).toBe('none')
     expect(

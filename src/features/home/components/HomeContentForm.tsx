@@ -315,6 +315,32 @@ export function HomeContentForm({
       <section className="flex flex-col gap-4">
         <div>
           <h2 className="font-headline-sm text-headline-sm text-on-surface">
+            Featured Services
+          </h2>
+          <p className="mt-1 font-body-md text-body-md text-secondary">
+            The three cards in the Home page&apos;s &quot;Our Electrical Services&quot;
+            grid. Fill only the fields you want to change; blank fields keep the public
+            site&apos;s current content.
+          </p>
+        </div>
+
+        {draft.services.map((service, index) => (
+          <HomeServiceEditor
+            key={index}
+            index={index}
+            service={service}
+            errors={textErrors}
+            disabled={isSaving}
+            open={openServices[index] ?? true}
+            onToggle={() => toggleService(index)}
+            onChange={(field, value) => handleServiceChange(index, field, value)}
+          />
+        ))}
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <div>
+          <h2 className="font-headline-sm text-headline-sm text-on-surface">
             Featured Engineering Projects
           </h2>
           <p className="mt-1 font-body-md text-body-md text-secondary">
@@ -340,32 +366,6 @@ export function HomeContentForm({
             onChange={(field: CardTextField, value: string) =>
               handleCardChange(index, field, value)
             }
-          />
-        ))}
-      </section>
-
-      <section className="flex flex-col gap-4">
-        <div>
-          <h2 className="font-headline-sm text-headline-sm text-on-surface">
-            Featured Services
-          </h2>
-          <p className="mt-1 font-body-md text-body-md text-secondary">
-            The six cards in the Home page&apos;s &quot;Our Electrical Services&quot;
-            grid. Fill only the fields you want to change; blank fields keep the public
-            site&apos;s current content.
-          </p>
-        </div>
-
-        {draft.services.map((service, index) => (
-          <HomeServiceEditor
-            key={index}
-            index={index}
-            service={service}
-            errors={textErrors}
-            disabled={isSaving}
-            open={openServices[index] ?? true}
-            onToggle={() => toggleService(index)}
-            onChange={(field, value) => handleServiceChange(index, field, value)}
           />
         ))}
       </section>

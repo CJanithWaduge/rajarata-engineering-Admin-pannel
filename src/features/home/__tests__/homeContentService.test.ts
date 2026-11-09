@@ -98,39 +98,24 @@ function storedContent(): HomeContent {
     featuredServices: [
       {
         icon: 'home_repair_service',
-        title: 'Residential & Commercial Wiring',
-        description: 'Complete wiring for homes and offices.',
+        title: 'Residential, Commercial & Industrial Electrical Installations',
+        description:
+          'Complete electrical wiring, power distribution, and installation for homes, offices, commercial buildings, and industrial facilities with high safety standards.',
         href: '/services#service-01',
       },
       {
-        icon: 'precision_manufacturing',
-        title: 'Industrial Electrical Installations',
-        description: 'High-demand manufacturing floor power drops.',
-        href: '/services#service-02',
-      },
-      {
-        icon: 'assignment_turned_in',
-        title: 'Testing & Commissioning',
-        description: 'Insulation resistance and loop impedance checks.',
-        href: '/services#service-05',
-      },
-      {
-        icon: 'build_circle',
-        title: 'Maintenance & Troubleshooting',
-        description: 'Fault finding and preventive upkeep of LV systems.',
-        href: '/services#service-06',
-      },
-      {
-        icon: 'lan',
-        title: 'All Kinds of ELV Solutions',
-        description: 'Structured cabling, access control, and CCTV networks.',
+        icon: 'security',
+        title: 'CCTV Camera Installation & Maintenance',
+        description:
+          'Professional security camera setup, advanced surveillance configuration, and regular maintenance to ensure maximum protection for your premises.',
         href: '/services#service-07',
       },
       {
-        icon: 'bolt',
-        title: 'Lightning Protection System (LPS)',
-        description: 'ESE and conventional air terminal networks.',
-        href: '/services#service-08',
+        icon: 'electric_meter',
+        title: 'MDB / SMDB Panel Installation',
+        description:
+          'Expert installation, wiring, and configuration of Main Distribution Boards (MDB) and Sub Main Distribution Boards (SMDB) for reliable and efficient power control.',
+        href: '/services#service-03',
       },
     ],
     updatedAt: null,
@@ -245,6 +230,31 @@ describe('getHomeContent', () => {
 
     expect(result.content?.featuredProjects).toHaveLength(3)
     expect(result.content?.featuredProjects[0]?.image.url).toBe('')
+  })
+
+  it('keeps curated and internet-selected service icons but drops unsafe names', async () => {
+    mocks.getDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({
+        hero: docImage('hero-old'),
+        featuredProjects: [],
+        featuredServices: [
+          { icon: 'security', title: '', description: '', href: '' },
+          { icon: 'material-symbols:camera', title: '', description: '', href: '' },
+          { icon: 'material-symbols:../evil', title: '', description: '', href: '' },
+        ],
+        updatedAt: null,
+        updatedBy: null,
+      }),
+    })
+
+    const result = await getHomeContent()
+
+    expect(result.content?.featuredServices.map((service) => service.icon)).toEqual([
+      'security',
+      'material-symbols:camera',
+      '',
+    ])
   })
 
   it('maps a permission error to a HomeError', async () => {

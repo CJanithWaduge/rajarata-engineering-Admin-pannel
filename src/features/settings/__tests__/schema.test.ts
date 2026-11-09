@@ -58,3 +58,61 @@ describe('settingsSchema Google Maps embed', () => {
     )
   })
 })
+
+describe('settingsSchema Sri Lankan contact numbers', () => {
+  function parseNumbers(phone: string, whatsapp = '') {
+    return settingsSchema.safeParse({ ...base, phone, whatsapp })
+  }
+
+  it('normalises a ten-digit local phone number to +94', () => {
+    const result = parseNumbers('0771234567')
+
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.phone).toBe('+94771234567')
+  })
+
+  it('normalises a +94 phone number and keeps it in E.164 form', () => {
+    const result = parseNumbers('+94 77 123 4567')
+
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.phone).toBe('+94771234567')
+  })
+
+  it('rejects a phone number that is not ten local digits', () => {
+    expect(parseNumbers('077123456').success).toBe(false)
+    expect(parseNumbers('07712345678').success).toBe(false)
+  })
+
+  it('rejects a foreign phone number', () => {
+    expect(parseNumbers('+447712345678').success).toBe(false)
+  })
+
+  it('normalises WhatsApp to digits only, without a plus', () => {
+    const result = parseNumbers('', '+94 77 123 4567')
+
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.whatsapp).toBe('94771234567')
+  })
+
+  it('accepts an empty WhatsApp number', () => {
+    const result = parseNumbers('')
+
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.whatsapp).toBe('')
+  })
+
+  it('rejects an invalid WhatsApp number', () => {
+    expect(parseNumbers('', '077123456').success).toBe(false)
+    expect(parseNumbers('', '+447712345678').success).toBe(false)
+  })
+
+  it('accepts the already-normalised stored values without changing them', () => {
+    const result = parseNumbers('+94771234567', '94771234567')
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.phone).toBe('+94771234567')
+      expect(result.data.whatsapp).toBe('94771234567')
+    }
+  })
+})

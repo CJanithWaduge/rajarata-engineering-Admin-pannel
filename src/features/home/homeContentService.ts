@@ -11,7 +11,7 @@ import {
   HOME_SERVICE_COUNT,
   INLINE_MEDIA_DOC_BUDGET,
   isHomeServiceHref,
-  isHomeServiceIcon,
+  isHomeServiceIconValue,
 } from './constants'
 import { EMPTY_IMAGE, createEmptyService, emptyProject } from './defaults'
 import { HomeError, logHomeError, toHomeError } from './errors'
@@ -72,7 +72,7 @@ function readService(value: unknown): HomeService {
   const href = readString(record.href)
 
   return {
-    icon: isHomeServiceIcon(icon) ? icon : '',
+    icon: isHomeServiceIconValue(icon) ? icon : '',
     title: readString(record.title),
     description: readString(record.description),
     href: isHomeServiceHref(href) ? href : '',

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { ICONIFY_ICON_NAME_PATTERN } from '../../lib/iconify'
 import {
   CARD_COUNT,
   HOME_SERVICE_COUNT,
@@ -42,7 +43,15 @@ export const heroTextSchema = z.object({
 export const homeServiceSchema = z.object({
   icon: z.union([
     z.literal(''),
-    z.enum(HOME_SERVICE_ICONS, { message: 'Choose an icon from the allowed list.' }),
+    z.enum(HOME_SERVICE_ICONS),
+    z
+      .string()
+      .trim()
+      .max(80, 'Choose an icon from the list or the search results.')
+      .regex(
+        ICONIFY_ICON_NAME_PATTERN,
+        'Choose an icon from the list or the search results.',
+      ),
   ]),
   title: optionalText('Service title', HOME_SERVICE_TEXT_LIMITS.title),
   description: optionalText(

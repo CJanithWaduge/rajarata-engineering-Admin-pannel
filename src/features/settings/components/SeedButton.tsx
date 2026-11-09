@@ -7,7 +7,7 @@ import { seedAllContent } from '../seedContentService'
 type SeedState = 'idle' | 'saving' | 'success' | 'error'
 
 const CONFIRM_MESSAGE =
-  'Seed Services, About, Projects, and Home content with the public site copy? This replaces the text in those pages, including the three featured Home project cards and six Home service cards. Existing Home images, contact details, and the site logo are preserved.'
+  'Seed Services, About, Projects, and Home content with the public site copy? This replaces the text in those pages, including the three featured Home project cards and three Home service cards. Existing Home images, contact details, and the site logo are preserved.'
 
 export function SeedButton() {
   const { admin } = useAuth()
@@ -45,7 +45,7 @@ export function SeedButton() {
       <div className="flex flex-col gap-3 px-6 py-5">
         <p className="font-body-sm text-body-sm text-secondary">
           Copies the public site&apos;s built-in Services, About, and Projects copy,
-          plus the three featured Home project cards and six Home service cards,
+          plus the three featured Home project cards and three Home service cards,
           into Firestore so they can be edited here. Use this once on a new
           project, or to reset those pages to their original wording.
         </p>
